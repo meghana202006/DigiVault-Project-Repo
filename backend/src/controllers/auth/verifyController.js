@@ -15,6 +15,7 @@ const verifyOTP = async (req,res) => {
 
     try{
         const user = await User.findOne({email: lowerEmail});
+        console.log(user);
         if(!user){
             return res.status(400).json({message: "User not found"});
         } 

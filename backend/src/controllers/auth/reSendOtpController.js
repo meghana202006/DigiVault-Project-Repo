@@ -1,6 +1,6 @@
 const User = require("../../models/userModel");
 const sendEmail = require("../../utils/sendEmail");
-const genOTP = require("../../utils/otpGenerator");
+const generateOTP = require("../../utils/otpGenerator");
 
 const reSendOTP = async (req,res) => {
     const {email} = req.body;
@@ -13,11 +13,11 @@ const reSendOTP = async (req,res) => {
             return res.status(400).json({message: "User not found"});
         }
 
-        const {otp, otpExpires} = genOTP();
+        const {otp, otpExpires} = generateOTP();
 
         await User.updateOne(
             {_id: user._id},
-            {$set: {otp:otp, otp:otpExpires}}
+            {$set: {otp:otp, otpExpires:otpExpires}}
         );
 
         await sendEmail(user.email, otp);

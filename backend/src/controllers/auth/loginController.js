@@ -18,6 +18,7 @@ const login = async (req,res)=>{
 
         // find user
         const user = await User.findOne({email: lowerEmail});
+
         if(user && (await user.matchPassword(password))){
 
             const {otp, otpExpires} = generateOTP();
@@ -38,7 +39,6 @@ const login = async (req,res)=>{
             res.status(401).json({message: 'Invalid email or password'});
         }
     } catch (err){
-        console.log(err)
         res.status(500).json({message: err.message});
     }
 };
