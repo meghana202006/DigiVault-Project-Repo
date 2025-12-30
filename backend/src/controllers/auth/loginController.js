@@ -5,14 +5,12 @@ const generateOTP = require('../../utils/otpGenerator')
 // login controller
 const login = async (req,res)=>{
     const {email, password} = req.body;
-    console.log(email,password)
     try{
         // type check
         if(
             typeof email !== "string" ||
             typeof password !== "string"
         ) {
-            console.log("hello")
             return res.status(400).json({message: "Invalid input"});
         }
         // no duplicate
@@ -20,7 +18,6 @@ const login = async (req,res)=>{
 
         // find user
         const user = await User.findOne({email: lowerEmail});
-        console.log(user)
         if(user && (await user.matchPassword(password))){
 
             const {otp, otpExpires} = generateOTP();

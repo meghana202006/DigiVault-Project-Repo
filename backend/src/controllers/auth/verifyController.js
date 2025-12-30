@@ -11,9 +11,10 @@ const generateToken = (id)=>{
 // OTP veriy
 const verifyOTP = async (req,res) => {
     const {email, otp} = req.body;
-    console.log(email)
+    const lowerEmail = email.toLowerCase().trim();
+
     try{
-        const user = await User.findOne({email});
+        const user = await User.findOne({email: lowerEmail});
         if(!user){
             return res.status(400).json({message: "User not found"});
         } 
@@ -24,6 +25,7 @@ const verifyOTP = async (req,res) => {
             user.otp = undefined;
             user.otpExpires = undefined;
             await user.save();
+
             // send token
             res.json({
                 _id: user._id,
