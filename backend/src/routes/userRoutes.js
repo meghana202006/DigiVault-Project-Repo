@@ -6,7 +6,9 @@ const {login} = require('../controllers/auth/loginController');
 const {verifyOTP} = require('../controllers/auth/verifyController');
 const {reSendOTP} = require('../controllers/auth/reSendOtpController');
 const {forgotPassword} = require('../controllers/auth/forgotPasswordOtp');
+const {verifyForgotPasswordOTP} = require('../controllers/auth/verifyForgotPasswordOtp');
 const {resetPassword} = require('../controllers/auth/resetPasswordCheck');
+const {refreshToken} = require('../controllers/auth/refreshTokenController');
 
 const loginLimiter = require("../middleware/loginLimiter"); 
 const tokenCheck = require("../middleware/tokenCheck");
@@ -17,11 +19,11 @@ router.post('/register', register);
 
 // login rout
 // you can acess this api by going to "http://localhost:5000/api/users/login"
-router.post('/login',loginLimiter, tokenCheck, login);
-
+router.post('/login',login);
+// router.post('/login',loginLimiter, tokenCheck, login);
 // verify rout
 // you can acess this api by going to "http://localhost:5000/api/users/resendOTP"
-router.post('/resendOTP', tokenCheck, reSendOTP);
+router.post('/resendOTP', reSendOTP);
 
 // verify rout
 // you can acess this api by going to "http://localhost:5000/api/users/verifyOTP"
@@ -31,9 +33,17 @@ router.post('/verifyOTP', tokenCheck, verifyOTP);
 // you can acess this api by going to "http://localhost:5000/api/users/forgotPassword"
 router.post('/forgotPassword', forgotPassword);
 
+// verify OTP for forgot password flow
+// you can acess this api by going to "http://localhost:5000/api/users/verifyForgotPasswordOTP"
+router.post('/verifyForgotPasswordOTP', verifyForgotPasswordOTP);
+
 // verify rout
 // you can acess this api by going to "http://localhost:5000/api/users/resetPassword"
 router.post('/resetPassword', resetPassword);
+
+// refresh token route
+// you can access this api by going to "http://localhost:5000/api/users/refreshToken"
+router.post('/refreshToken', refreshToken);
 
 
 module.exports = router;

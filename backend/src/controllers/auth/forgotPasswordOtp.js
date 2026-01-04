@@ -13,10 +13,10 @@ const forgotPassword = async (req,res) => {
             return res.status(200).json({message:"If email is register, OTP sent."});
         }
 
-        const {otp, otpExpired} = generateOTP();
+        const {otp, otpExpires} = generateOTP();
         await User.updateOne(
             {_id:user._id},
-            {$set: {otp: otp, otpExpired: otpExpired}}
+            {$set: {otp: otp, otpExpires: otpExpires}}
         );
 
         await sendEmail(user.email, otp);

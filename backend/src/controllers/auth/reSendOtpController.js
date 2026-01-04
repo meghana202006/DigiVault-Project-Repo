@@ -4,7 +4,7 @@ const generateOTP = require("../../utils/otpGenerator");
 
 const reSendOTP = async (req,res) => {
     const {email} = req.body;
-
+    
     try{
         const lowerEmail = email.toLowerCase().trim();
         const user = await User.findOne({email: lowerEmail});

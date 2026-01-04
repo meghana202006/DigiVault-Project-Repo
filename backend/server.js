@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 
 
 const connectDB = require('./src/config/db');
@@ -13,8 +14,16 @@ connectDB();
 const app = express();
 
 app.use(express.json());
-app.use(cors());
-app.use(helmet());
+app.use(cookieParser()); // Parse cookies from request
+app.use(cors({
+    origin: 'http://localhost:5173', // EXACT frontend URL (no trailing slash)
+    credentials: true                // ALLOWS the browser to save the cookie
+}));
+// Configure Helmet to allow cookies
+app.use(helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false
+}));
 
 
 app.get("/", (req,res) =>{

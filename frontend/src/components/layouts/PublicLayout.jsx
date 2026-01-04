@@ -1,13 +1,13 @@
 import React from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import Navbar from '../Navbar';
+import Navbar from '../shared/Navbar';
 
 function PublicLayout() {
     const location = useLocation();
     const path = location.pathname;
   return (
    <div className="relative min-h-screen w-full">
-      <div className="fixed inset-0 -z-10 bg-linear-to-br from-slate-900 via-slate-800 to-blue-900">
+      <div className={`fixed inset-0 -z-10 ${path === '/' ? 'bg-linear-to-br from-slate-900 via-slate-800 to-blue-900' : 'bg-linear-to-br from-slate-900 via-slate-800 to-slate-900'}`}>
         { path !== '/' && (
             <>
             <div className="absolute -top-5 -right-10 w-90 h-90 bg-blue-500/40 rounded-full blur-3xl animate-pulse"></div>

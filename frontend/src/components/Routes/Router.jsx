@@ -1,12 +1,12 @@
 import { createBrowserRouter} from 'react-router-dom'
-import Register from '../Register'
 
-import Login from '../Login'
-import Home from '../Home'
-
-import OTPForm from '../OTPForm'
-import ResetPassword from '../ResetPassword'
+import Home from '../home/Home'
+import Register from '../authentication/Register'
 import PublicLayout from '../layouts/PublicLayout'
+
+import AuthFlowManager from '../authentication/AuthFlowManager'
+import Vault from '../Vault'
+import ProtectedRoute from '../shared/ProtectedRoute'
 
 
 const router = createBrowserRouter([
@@ -19,23 +19,23 @@ const router = createBrowserRouter([
       },
       {
         path:'/login',
-        element:<Login/>
+        element:<AuthFlowManager/>
       },
       {
         path:'/register',
         element:<Register/>
       }
+     
     ]
   },
-  
-  
   {
-     path:'/OTPForm',
-    element:<OTPForm/>
+    path:'/vault',
+    element: (
+      <ProtectedRoute>
+        <Vault/>
+      </ProtectedRoute>
+    )
   }
-   
-  
-  
 ])
 
 export default router

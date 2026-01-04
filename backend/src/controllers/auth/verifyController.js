@@ -1,12 +1,6 @@
 const User = require('../../models/userModel');
 const jwt = require('jsonwebtoken');
-
-// genrater token
-const generateToken = (id)=>{
-    return jwt.sign({id}, process.env.JWT_SECRET, {
-        expiresIn:'24h',
-    });
-};
+const jwtService = require('../../utils/jwtService')
 
 // OTP veriy
 const verifyOTP = async (req,res) => {
@@ -14,7 +8,7 @@ const verifyOTP = async (req,res) => {
     const lowerEmail = email.toLowerCase().trim();
 
     try{
-        const user = await User.findOne({email: lowerEmail});
+        const user = await User.findOne({email: lowerEmail}).select('+password');
         console.log(user);
         if(!user){
             return res.status(400).json({message: "User not found"});
@@ -27,14 +21,29 @@ const verifyOTP = async (req,res) => {
             user.otpExpires = undefined;
             await user.save();
 
+            // Token generation
+            const pwdStamp = user.password.slice(-10)
+            // Normalize email to lowercase for consistency
+            const normalizedEmail = user.email.toLowerCase().trim();
+            const accessToken = jwtService.generateToken(normalizedEmail, pwdStamp)
+            const refreshToken = jwtService.generateRefreshToken(normalizedEmail)
+            
+            res.cookie('refreshToken', refreshToken.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production', // true in production, false in development
+                sameSite: 'Strict', // Enhanced security - prevents CSRF attacks
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days expiration
+                path: '/' // Ensure cookie is sent to all routes
+            });
             // send token
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
-                token: generateToken(user._id),
+                token: accessToken,
                 message: "Login Successful!"
             });
+        
         } else{
             res.status(400).json({message:"Invalid or expired OTP"});
         }

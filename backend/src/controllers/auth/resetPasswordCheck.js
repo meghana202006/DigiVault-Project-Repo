@@ -2,6 +2,7 @@ const User = require("../../models/userModel");
 
 const resetPassword = async (req, res) => {
     const { email, otp, password } = req.body;
+    console.log(otp);
 
     try {
         const lowerEmail = email.toLowerCase().trim();
@@ -11,12 +12,13 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: "User not found" });
         }
 
-        // FIXED: correct expiry check
-        if (user.otpExpires > Date.now()) {
+        // Check if OTP has expired
+        if (user.otpExpires < Date.now()) {
             return res.status(400).json({ message: "OTP expired" });
         }
 
         if (user.otp !== otp) {
+            console.log(user.otp, otp);
             return res.status(400).json({ message: "Invalid OTP" });
         }
 
