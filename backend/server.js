@@ -10,11 +10,13 @@ const userRoutes = require('./src/routes/userRoutes');
 dotenv.config();
 connectDB();
 
+
 const app = express();
+
+app.use(helmet());
 
 app.use(express.json());
 app.use(cors());
-app.use(helmet());
 
 
 app.get("/", (req,res) =>{
