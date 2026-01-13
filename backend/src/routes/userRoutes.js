@@ -11,27 +11,27 @@ const {resetPassword} = require('../controllers/auth/resetPasswordCheck');
 const loginLimiter = require("../middleware/loginLimiter"); 
 const tokenCheck = require("../middleware/tokenCheck");
 
-// register rout
+// register route
 // you can acess this api by going to "http://localhost:5000/api/users/register"
 router.post('/register', register);
 
-// login rout
+// login route
 // you can acess this api by going to "http://localhost:5000/api/users/login"
 router.post('/login',loginLimiter, tokenCheck, login);
 
-// verify rout
+// reSendOTP route
 // you can acess this api by going to "http://localhost:5000/api/users/resendOTP"
 router.post('/resendOTP', tokenCheck, reSendOTP);
 
-// verify rout
+// verify route
 // you can acess this api by going to "http://localhost:5000/api/users/verifyOTP"
 router.post('/verifyOTP', tokenCheck, verifyOTP);
 
-// verify rout
+// forgotPassword route
 // you can acess this api by going to "http://localhost:5000/api/users/forgotPassword"
 router.post('/forgotPassword', forgotPassword);
 
-// verify rout
+// resetPassword route
 // you can acess this api by going to "http://localhost:5000/api/users/resetPassword"
 router.post('/resetPassword', resetPassword);
 

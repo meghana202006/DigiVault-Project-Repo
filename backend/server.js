@@ -20,17 +20,14 @@ app.use(helmet());
 app.use(express.json());
 app.use(cors());
 
-
-app.get("/", (req,res) =>{
-    res.send("yeeeeeeeeeeeeeeeea");
-});
-
-
+// users
 app.use('/api/users', userRoutes);
+
+// files
 app.use('/api/files', fileRoutes);
 
 
 const PORT = process.env.PORT || 5000
 app.listen(PORT, ()=>{
-    console.log("server is running");
+    console.log(`server is running on ${process.env.PORT}`);
 });

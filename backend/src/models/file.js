@@ -42,4 +42,5 @@ const fileSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('File', fileSchema);
+// Check if 'File' already exists. If yes, reuse it. If no, create it.
+module.exports = mongoose.models.File || mongoose.model('File', fileSchema);
