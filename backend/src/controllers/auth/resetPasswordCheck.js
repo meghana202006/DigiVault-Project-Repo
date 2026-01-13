@@ -11,8 +11,7 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: "User not found" });
         }
 
-        // FIXED: correct expiry check
-        if (user.otpExpires > Date.now()) {
+        if (Date.now() > user.otpExpires) {
             return res.status(400).json({ message: "OTP expired" });
         }
 
@@ -20,7 +19,7 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: "Invalid OTP" });
         }
 
-        user.password = password; // make sure hashing middleware exists
+        user.password = password;
         user.otp = undefined;
         user.otpExpires = undefined;
 

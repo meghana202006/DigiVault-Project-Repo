@@ -29,11 +29,11 @@ router.post('/verifyOTP', tokenCheck, verifyOTP);
 
 // forgotPassword route
 // you can acess this api by going to "http://localhost:5000/api/users/forgotPassword"
-router.post('/forgotPassword', forgotPassword);
+router.post('/forgotPassword',tokenCheck, forgotPassword);
 
 // resetPassword route
 // you can acess this api by going to "http://localhost:5000/api/users/resetPassword"
-router.post('/resetPassword', resetPassword);
+router.post('/resetPassword',tokenCheck, resetPassword);
 
 
 module.exports = router;
