@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -12,11 +12,13 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  CheckCircle,
 } from "lucide-react";
 import { registerStyles as styles } from "../../styles/tailwindClasses";
 import RuleItem from "../shared/RuleItem";
 import Navbar from "../shared/Navbar";
 import Toast from "../shared/Toast";
+import { checkUsernameAvailability } from "../../utils/checkUsername";
 
 function Register() {
   const initialState = {
@@ -33,6 +35,31 @@ function Register() {
 
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null);
+  const [usernameStatus, setUsernameStatus] = useState({
+    checking: false,
+    available: null, // null = not checked, true = available, false = taken
+    message: ''
+  });
+  const [usernameDebounceTimer, setUsernameDebounceTimer] = useState(null);
+
+  // Handle username availability check
+  const handleUsernameCheck = async (username) => {
+    if (!username || username.trim() === '') {
+      setUsernameStatus({ checking: false, available: null, message: '' });
+      return;
+    }
+
+    setUsernameStatus({ checking: true, available: null, message: 'Checking...' });
+
+    const result = await checkUsernameAvailability(username);
+    
+    setUsernameStatus({
+      checking: false,
+      available: result.available,
+      message: result.message
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setError("");
@@ -41,6 +68,26 @@ function Register() {
       ...prevData,
       [name]: value,
     }));
+
+    // Check username availability with debounce
+    if (name === 'username') {
+      // Clear previous timer
+      if (usernameDebounceTimer) {
+        clearTimeout(usernameDebounceTimer);
+      }
+
+      // Reset status when user starts typing
+      if (value.trim() === '') {
+        setUsernameStatus({ checking: false, available: null, message: '' });
+      } else {
+        // Set new timer (wait 500ms after user stops typing)
+        const timer = setTimeout(() => {
+          handleUsernameCheck(value);
+        }, 500);
+        
+        setUsernameDebounceTimer(timer);
+      }
+    }
   };
 
   const clearFormData = () => {
@@ -54,6 +101,15 @@ function Register() {
     clearFormData();
     navigate("/login");
   };
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (usernameDebounceTimer) {
+        clearTimeout(usernameDebounceTimer);
+      }
+    };
+  }, [usernameDebounceTimer]);
+
   const passwordRules = useMemo(() => {
     const password = profileData.password;
     return {
@@ -70,6 +126,33 @@ function Register() {
   };
   const validateForm = async (e) => {
     e.preventDefault();
+    
+    // Check if username is available
+    if (usernameStatus.available === false || usernameStatus.checking) {
+      setToast({ 
+        message: usernameStatus.checking 
+          ? "Please wait while we check username availability" 
+          : "Username is already taken. Please choose another one.", 
+        type: "error" 
+      });
+      return;
+    }
+    
+    // If username hasn't been checked yet, check it now
+    if (profileData.username && usernameStatus.available === null) {
+      await handleUsernameCheck(profileData.username);
+      // Wait a moment for state to update
+      setTimeout(() => {
+        if (usernameStatus.available === false) {
+          setToast({ 
+            message: "Username is already taken. Please choose another one.", 
+            type: "error" 
+          });
+        }
+      }, 100);
+      return;
+    }
+    
     if (
       !profileData.username ||
       !profileData.email ||
@@ -147,13 +230,46 @@ function Register() {
             <div className="relative">
               <label className={styles.labelBase}>Username</label>
               <User className="absolute top-19 left-4 text-slate-400" />
+              
+              {/* Status icon */}
+              {profileData.username && (
+                <div className="absolute top-19 right-4">
+                  {usernameStatus.checking ? (
+                    <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                  ) : usernameStatus.available === true ? (
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  ) : usernameStatus.available === false ? (
+                    <AlertCircle className="w-5 h-5 text-red-400" />
+                  ) : null}
+                </div>
+              )}
+              
               <input
-                className={styles.inputField}
+                className={`${styles.inputField} ${
+                  usernameStatus.available === false 
+                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400' 
+                    : usernameStatus.available === true 
+                    ? 'border-green-400 focus:border-green-400 focus:ring-green-400' 
+                    : ''
+                }`}
                 placeholder="Enter the username"
                 name="username"
                 value={profileData.username}
                 onChange={handleChange}
               />
+              
+              {/* Status message */}
+              {profileData.username && usernameStatus.message && (
+                <p className={`text-sm mt-1 ml-1 ${
+                  usernameStatus.available === true 
+                    ? 'text-green-400' 
+                    : usernameStatus.available === false 
+                    ? 'text-red-400' 
+                    : 'text-slate-400'
+                }`}>
+                  {usernameStatus.message}
+                </p>
+              )}
             </div>
             <div className="relative">
               <label className={styles.labelBase}>Email Id</label>
