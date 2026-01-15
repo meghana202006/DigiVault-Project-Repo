@@ -1,4 +1,5 @@
 const User = require('../../models/userModel');
+<<<<<<< HEAD
 
 // Check username availability controller
 const checkUsername = async (req, res) => {
@@ -88,6 +89,10 @@ const checkEmail = async (req, res) => {
         });
     }
 };
+=======
+const {encryptPasskey} = require('../../utils/crypto');
+const crypto = require('crypto');
+>>>>>>> 8eaa2bc008e7a17aa2d27e091256a1934c9a0750
 
 // register controller
 const register = async (req,res)=>{
@@ -119,20 +124,39 @@ const register = async (req,res)=>{
             return res.status(400).json({message: 'User already exists'});
         }
         
+<<<<<<< HEAD
         // Create user with normalized username
+=======
+        // passkey generater
+        const rawPasskey = crypto.randomBytes(16).toString('hex');
+        const protectedPasskey = encryptPasskey(rawPasskey);
+        
+        // if user ont exist
+>>>>>>> 8eaa2bc008e7a17aa2d27e091256a1934c9a0750
         const user = await User.create({
             username: normalizedUsername,
             email: lowerEmail,
+<<<<<<< HEAD
             password
+=======
+            password,
+            passkey: protectedPasskey
+>>>>>>> 8eaa2bc008e7a17aa2d27e091256a1934c9a0750
         });
         
         if(user) {
-           return res.status(201).json({
-            message: "Registration Successful! Please Login to verify your account."
-           });
+            return res.status(201).json({
+                message: "Registration Successful! Save the Passkey.",
+                user: {
+                    _id: user._id,
+                    username: user.username,
+                    email: user.email,
+                    SecretPasskey: rawPasskey
+                }
+            });
         }
     } catch (err){
-        console.log(err)
+        console.log("Register Error")
         res.status(500).json({message: "invalid input"});
     }
 };

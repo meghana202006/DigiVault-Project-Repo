@@ -14,6 +14,7 @@ const {getCurrentUser} = require('../controllers/auth/getCurrentUser');
 const loginLimiter = require("../middleware/loginLimiter"); 
 const tokenCheck = require("../middleware/tokenCheck");
 
+<<<<<<< HEAD
 // Check username availability route
 // Access at: "http://localhost:5000/api/users/checkUsername"
 router.post('/checkUsername', checkUsername);
@@ -23,32 +24,45 @@ router.post('/checkUsername', checkUsername);
 router.post('/checkEmail', checkEmail);
 
 // register rout
+=======
+// register route
+>>>>>>> 8eaa2bc008e7a17aa2d27e091256a1934c9a0750
 // you can acess this api by going to "http://localhost:5000/api/users/register"
 router.post('/register', register);
 
-// login rout
+// login route
 // you can acess this api by going to "http://localhost:5000/api/users/login"
+<<<<<<< HEAD
 router.post('/login',login);
 // router.post('/login',loginLimiter, tokenCheck, login);
 // verify rout
+=======
+router.post('/login',loginLimiter, tokenCheck, login);
+
+// reSendOTP route
+>>>>>>> 8eaa2bc008e7a17aa2d27e091256a1934c9a0750
 // you can acess this api by going to "http://localhost:5000/api/users/resendOTP"
 router.post('/resendOTP', reSendOTP);
 
-// verify rout
+// verify route
 // you can acess this api by going to "http://localhost:5000/api/users/verifyOTP"
 router.post('/verifyOTP', tokenCheck, verifyOTP);
 
-// verify rout
+// forgotPassword route
 // you can acess this api by going to "http://localhost:5000/api/users/forgotPassword"
-router.post('/forgotPassword', forgotPassword);
+router.post('/forgotPassword',tokenCheck, forgotPassword);
 
+<<<<<<< HEAD
 // verify OTP for forgot password flow
 // you can acess this api by going to "http://localhost:5000/api/users/verifyForgotPasswordOTP"
 router.post('/verifyForgotPasswordOTP', verifyForgotPasswordOTP);
 
 // verify rout
+=======
+// resetPassword route
+>>>>>>> 8eaa2bc008e7a17aa2d27e091256a1934c9a0750
 // you can acess this api by going to "http://localhost:5000/api/users/resetPassword"
-router.post('/resetPassword', resetPassword);
+router.post('/resetPassword',tokenCheck, resetPassword);
 
 // refresh token route
 // you can access this api by going to "http://localhost:5000/api/users/refreshToken"
