@@ -19,11 +19,11 @@ const login = async (req,res)=>{
 
         // find user
         const user = await User.findOne({email: lowerEmail}).select('+password');
-
+        console.log(user);
         if(user && (await user.matchPassword(password))){
             // Check if valid refresh token exists
             const refreshToken = req.cookies?.refreshToken;
-            
+          
             if (refreshToken) {
                 const decoded = jwtService.verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET);
                 
@@ -35,7 +35,7 @@ const login = async (req,res)=>{
                     const pwdStamp = user.password.slice(-10);
                     // Use normalized email for consistency
                     const normalizedEmail = user.email.toLowerCase().trim();
-                    const accessToken = jwtService.generateToken(normalizedEmail, pwdStamp);
+                    const accessToken = jwtService.generateToken(normalizedEmail, pwdStamp ,user._id.toString());
                     
                     // Optionally refresh the refresh token
                     const newRefreshToken = jwtService.generateRefreshToken(normalizedEmail);
@@ -54,6 +54,7 @@ const login = async (req,res)=>{
                         email: user.email,
                         token: accessToken,
                         message: "Login successful",
+                        salt: user.security.salt,
                         requireOTP: false // Skip OTP step
                     });
                 }
@@ -72,6 +73,7 @@ const login = async (req,res)=>{
             res.json({
                 message: "OTP sent to your email (Expires in 1 min)",
                 email: user.email,
+                salt: user.security.salt,
                 requireOTP: true // Require OTP step
             });
             
@@ -79,6 +81,7 @@ const login = async (req,res)=>{
             res.status(401).json({message: 'Invalid email or password'});
         }
     } catch (err){
+        console.log(err.message);
         res.status(500).json({message: err.message});
     }
 };

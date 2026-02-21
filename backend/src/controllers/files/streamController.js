@@ -1,4 +1,4 @@
-const File = require('../../models/File');
+const File = require('../../models/file');
 const User = require('../../models/userModel');
 const { getStorage } = require('../../config/mega'); // We need this to verify connection
 const { decryptPasskey, decryptFileLink } = require('../../utils/crypto'); // We need to make this function!

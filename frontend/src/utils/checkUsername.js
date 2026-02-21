@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getApiBaseURL } from './axiosInstance';
 
-const API_BASE_URL = 'http://localhost:5000/api/users';
+const getUsersApiURL = () => `${getApiBaseURL()}/users`;
 
 /**
  * Check if a username is available
@@ -19,7 +20,7 @@ export const checkUsernameAvailability = async (username) => {
 
     try {
         const response = await axios.post(
-            `${API_BASE_URL}/checkUsername`,
+            `${getUsersApiURL()}/checkUsername`,
             { username: username.trim() }
         );
         
@@ -29,6 +30,7 @@ export const checkUsernameAvailability = async (username) => {
             error: false
         };
     } catch (err) {
+        console.log(err)
         return {
             available: false,
             message: err.response?.data?.message || 'Error checking username',
@@ -54,7 +56,7 @@ export const checkEmailAvailability = async (email) => {
 
     try {
         const response = await axios.post(
-            `${API_BASE_URL}/checkEmail`,
+            `${getUsersApiURL()}/checkEmail`,
             { email: email.trim() }
         );
         

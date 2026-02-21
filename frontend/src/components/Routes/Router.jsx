@@ -5,9 +5,14 @@ import Register from '../authentication/Register'
 import PublicLayout from '../layouts/PublicLayout'
 
 import AuthFlowManager from '../authentication/AuthFlowManager'
-import Vault from '../Vault'
+import Vault from '../Dashboard'
 import ProtectedRoute from '../shared/ProtectedRoute'
-
+import VaultLayout from '../VaultLayout'
+import Dashboard from '../Dashboard'
+import DocumentsSection from '../DocumentsSection'
+import ImagesSection from '../ImagesSection'
+import AudioSection from '../AudioSection'
+import VideosSection from '../VideosSection'
 
 const router = createBrowserRouter([
   {
@@ -32,9 +37,35 @@ const router = createBrowserRouter([
     path:'/vault',
     element: (
       <ProtectedRoute>
-        <Vault/>
+        <VaultLayout/>
       </ProtectedRoute>
-    )
+    ),
+    children:[
+      {
+        index : true,
+        element:<Dashboard/>
+      },
+      {
+        path:'documents',
+        element:<DocumentsSection/>
+      },
+      {
+        path:'images',
+        element:<ImagesSection/>
+      },
+      {
+        path:'audio',
+        element:<AudioSection/>
+      },
+      {
+        path:'videos',
+        element:<VideosSection/>
+      },
+      // {
+      //   path:'private',
+      //   element:<PrivateSection/>
+      // }
+    ]
   }
 ])
 

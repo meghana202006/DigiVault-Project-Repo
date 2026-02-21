@@ -4,7 +4,7 @@ import { useHashRoute } from "../hooks/useHashRoute";
 import VerifyOtpStep from "./steps/VerifyOtpStep";
 import EmailStep from "./steps/EmailStep";
 import ResetPassword from "./steps/ResetPassword";
-import Vault from "../Vault";
+import Vault from "../Dashboard";
 import Login from "./Login";
 import ResetSuccessStep from "./steps/ResetSuccessStep";
 

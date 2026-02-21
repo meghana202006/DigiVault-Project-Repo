@@ -41,7 +41,7 @@ const refreshToken = async (req, res) => {
 
         // Generate new access token
         const pwdStamp = user.password.slice(-10);
-        const accessToken = jwtService.generateToken(user.email, pwdStamp);
+        const accessToken = jwtService.generateToken(user.email, pwdStamp , user._id.toString());
 
         // Optionally generate new refresh token (refresh token rotation)
         const newRefreshToken = jwtService.generateRefreshToken(user.email);

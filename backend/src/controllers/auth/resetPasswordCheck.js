@@ -12,12 +12,9 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: "User not found" });
         }
 
-<<<<<<< HEAD
+
         // Check if OTP has expired
         if (user.otpExpires < Date.now()) {
-=======
-        if (Date.now() > user.otpExpires) {
->>>>>>> 8eaa2bc008e7a17aa2d27e091256a1934c9a0750
             return res.status(400).json({ message: "OTP expired" });
         }
 

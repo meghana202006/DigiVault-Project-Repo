@@ -2,9 +2,9 @@ const jwt = require("jsonwebtoken")
 const crypto = require("crypto")
 
 const jwtService = {
-    generateToken:(userId , pwd)=>{
+    generateToken:(userId , pwd , userDBId)=>{
         return jwt.sign(
-            {sub: userId, pwd},
+            {sub: userId, pwd, id: userDBId},
             process.env.JWT_SECRET,
             {expiresIn:'15m'}
         )

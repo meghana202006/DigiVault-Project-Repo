@@ -8,6 +8,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import ModalContainer from '../../shared/ModalContainer';
 import Toast from '../../shared/Toast';
 import axios from 'axios';
+import { getApiBaseURL } from '../../../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -80,7 +81,7 @@ function ResetPassword({ email, otp , onNext  }) {
 
     try {
       loader.start();
-      const res = await axios.post("http://localhost:5000/api/users/resetPassword", {
+      const res = await axios.post(`${getApiBaseURL()}/users/resetPassword`, {
         email: email,
         otp: otp,
         password: formData.newPassword

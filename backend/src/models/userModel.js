@@ -17,9 +17,37 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    passkey: {
-        type: String,
-        required: true
+    security:{
+        salt: {
+            type: [Number],
+            required: true
+        },
+        recoveryVault: {
+            type: [Number],
+            required: true
+        },
+        vaultIv: {
+            type: [Number],
+            required: true
+        }
+    },
+    megaStorage:{
+        uuid:{
+            type:String,
+            unique:true,
+            sparse:true,
+            required:false
+        },
+        rootNodeId:{
+            type:String,
+            required:false
+        },
+        sectionNodeIds:{
+            type:Map,
+            of:String,
+            required:false,
+        }
+
     },
 
     otp: { type: String },

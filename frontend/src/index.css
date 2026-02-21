@@ -40,6 +40,45 @@
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+@keyframes scaleUpCard {
+  from { 
+    opacity: 0; 
+    transform: scale(0.8);
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+@keyframes modalZoomIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.7);
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+  }
+  to { 
+    opacity: 1;
+  }
+}
+
+.animate-modal-zoom-in {
+  animation: modalZoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
 @keyframes zoomIn {
   from { 
     opacity: 0; 
@@ -89,6 +128,237 @@ input:focus + svg {
   }
 }
 
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 30;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.checkmark-animate {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: checkmark-draw 0.8s ease-in-out 0.4s forwards;
+}
+
+@keyframes success-scale {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes success-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(45, 212, 191, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(45, 212, 191, 0.8), 0 0 60px rgba(45, 212, 191, 0.4);
+  }
+}
+
+@keyframes upload-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes upload-slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes upload-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes upload-scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.animate-upload-fadeIn {
+  animation: upload-fadeIn 0.2s ease;
+}
+
+.animate-upload-slideUp {
+  animation: upload-slideUp 0.3s ease;
+}
+
+.animate-upload-slideIn {
+  animation: upload-slideIn 0.3s ease;
+}
+
+.animate-upload-scaleIn {
+  animation: upload-scaleIn 0.5s ease;
+}
+
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Custom scrollbar for upload modal */
+.upload-modal-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.upload-modal-scroll::-webkit-scrollbar-track {
+  background: #0f1419;
+  border-radius: 4px;
+}
+
+.upload-modal-scroll::-webkit-scrollbar-thumb {
+  background: #2d3748;
+  border-radius: 4px;
+}
+
+.upload-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #3d4a5c;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #475569 0%,
+    #475569 40%,
+    #64748b 50%,
+    #475569 60%,
+    #475569 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  will-change: background-position;
+}
+
 .animate-pulse-slow {
   animation: pulse-slow 3s ease-in-out infinite;
 }
+
+/* Smooth scrolling optimization */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* Enable hardware acceleration for smooth scrolling */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  /* Optimize rendering during scroll */
+  contain: layout style paint;
+}
+
+/* Optimize scroll performance */
+.smooth-scroll * {
+  /* Prevent unnecessary repaints */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+/* Card with animated top border */
+.card-animated {
+  position: relative;       /* Creates positioning context */
+  overflow: hidden;         /* Hides overflow content */
+  will-change: transform;   /* GPU acceleration */
+  
+  
+}
+
+/* The animated border (pseudo-element) */
+.card-animated::before {
+  content: '';              /* REQUIRED - makes ::before visible */
+  position: absolute;       /* Position inside the card */
+  top: 0;                   /* Stick to top edge */
+  left: 0;                  /* Start from left */
+  right: 0;                 /* Stretch to right */
+  height: 5px;              /* Border thickness */
+  
+  /* Gradient background using CSS variables */
+  background: linear-gradient(90deg, 
+    var(--border-start, #667eea) 0%, 
+    var(--border-end, #764ba2) 100%
+  );
+  
+  transform: scaleX(0);           /* Start hidden */
+  transform-origin: center;         /* Scale from left to right */
+  will-change: transform;         /* GPU acceleration */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* On hover - expand to full width */
+.card-animated:hover::before {
+  transform: scaleX(1);
+}
+
+/* Optional: Icon gradient */
+.card-icon-gradient {
+  background: linear-gradient(135deg, 
+    var(--icon-start, #667eea) 0%, 
+    var(--icon-end, #764ba2) 100%
+  );
+}
+
+/* Optional: Colored text */
+.card-action-text {
+  color: var(--action-color, #667eea);
+}
+

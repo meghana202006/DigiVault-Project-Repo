@@ -9,6 +9,7 @@ import {
 import useAuthLoader from "../../hooks/useAuthLoader";
 import { resetpwdStyles as styles } from "../../../styles/tailwindClasses";
 import axios from "axios";
+import { getApiBaseURL } from "../../../utils/axiosInstance";
 import ModalContainer from "../../shared/ModalContainer";
 import Toast from "../../shared/Toast";
 
@@ -41,7 +42,7 @@ function EmailStep({userData , onNext}) {
       }
       try{
           loader.start()
-          const res = await axios.post("http://localhost:5000/api/users/resendOTP",
+          const res = await axios.post(`${getApiBaseURL()}/users/resendOTP`,
             {
                 email : formData.email
             }

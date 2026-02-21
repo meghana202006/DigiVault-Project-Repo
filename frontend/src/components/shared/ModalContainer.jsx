@@ -8,11 +8,11 @@ function ModalContainer({
   padding = "md", // sm, md, lg
   borderRadius = "2xl", // none, sm, md, lg, xl, 2xl, 3xl, full
   showCloseButton = true,
-  loader = null
+  loader = null,
+  maxHeight = null,
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -42,6 +42,18 @@ function ModalContainer({
     "4xl": "max-w-4xl",
   };
 
+  // Max height mapping
+  const maxHeightClasses = {
+    sm: 'max-h-32',
+    md: 'max-h-48',
+    lg: 'max-h-60',
+    xl: 'max-h-72',
+    "2xl": 'max-h-[42rem]', // 672px
+    "3xl": 'max-h-96', // 384px
+    "4xl": 'max-h-[32rem]', // 512px
+    full: 'max-h-full',
+  }
+
   // Padding mapping
   const paddingClasses = {
     sm: "p-4",
@@ -64,7 +76,7 @@ function ModalContainer({
 
   return (
     <div
-      className={`relative bg-slate-800 ${borderRadiusClasses[borderRadius]} shadow-2xl border border-slate-400 ${widthClasses[maxWidth]} w-full overflow-hidden z-50 ${
+      className={`relative bg-slate-800 ${borderRadiusClasses[borderRadius]} shadow-2xl border border-slate-400 ${widthClasses[maxWidth]} ${maxHeight ? maxHeightClasses[maxHeight] : ''} w-full overflow-hidden z-50 ${
         isClosing ? 'email-step-zoom-out' : isVisible ? 'email-step-zoom-in' : ''
       }`}
       style={{
@@ -97,7 +109,7 @@ function ModalContainer({
         )}
 
         {/* Content */}
-        <div className={paddingClasses[padding]}>
+        <div className={`${paddingClasses[padding]} ${maxHeight ? 'overflow-y-auto' : ''}`}>
           {children}
         </div>
       </div>

@@ -30,10 +30,19 @@ const fileSchema = new mongoose.Schema({
   
   fileType: { 
     type: String, 
-    enum: ['image', 'video', 'document', 'other'], 
+    enum: ['image', 'video', 'document', 'audio','private'], 
     required: true 
   },
-
+  security:{
+    wrappedKey: {
+      type: [Number],
+      required:true
+  },
+  masterIV: {
+    type: [Number],
+    required: false
+  },
+  },
   url: {
     type: String,
     required: true

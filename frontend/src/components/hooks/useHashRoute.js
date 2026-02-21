@@ -13,6 +13,7 @@ function useHashRoute() {
                 "#verify-identity":"verify",
                 "#reset-password":"reset-password",
                 "#success":"success",
+                "#recovery-key":"recovery-key",
                 
             }
             if(routes[hash]){

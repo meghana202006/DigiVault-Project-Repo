@@ -25,7 +25,7 @@ const verifyOTP = async (req,res) => {
             const pwdStamp = user.password.slice(-10)
             // Normalize email to lowercase for consistency
             const normalizedEmail = user.email.toLowerCase().trim();
-            const accessToken = jwtService.generateToken(normalizedEmail, pwdStamp)
+            const accessToken = jwtService.generateToken(normalizedEmail, pwdStamp , user._id.toString())
             const refreshToken = jwtService.generateRefreshToken(normalizedEmail)
             
             res.cookie('refreshToken', refreshToken.token, {

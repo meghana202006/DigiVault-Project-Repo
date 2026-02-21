@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { getApiBaseURL } from '../../utils/axiosInstance';
 
 function ProtectedRoute({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -27,7 +28,7 @@ function ProtectedRoute({ children }) {
         // Token invalid, try to refresh
         try {
           const refreshRes = await axios.post(
-            'http://localhost:5000/api/users/refreshToken',
+            `${getApiBaseURL()}/users/refreshToken`,
             {},
             { withCredentials: true }
           );

@@ -1,6 +1,13 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { generateRandomSalt } from "../../utils/megaHelpers/saltGenerator";
+import { deriveMasterKey } from "../../utils/megaHelpers/genMasterKey";
+import { useHashRoute } from "../hooks/useHashRoute";
+import useUsernameAvailability from "../hooks/useUsernameAvailability";
+import useEmailAvailability from "../hooks/useEmailAvailability";
+
 import axios from "axios";
+import { getApiBaseURL } from "../../utils/axiosInstance";
 
 import {
   ShieldCheck,
@@ -18,7 +25,8 @@ import { registerStyles as styles } from "../../styles/tailwindClasses";
 import RuleItem from "../shared/RuleItem";
 import Navbar from "../shared/Navbar";
 import Toast from "../shared/Toast";
-import { checkUsernameAvailability } from "../../utils/checkUsername";
+import RecoveryKeyDownloadModal from "../shared/RecoveryKeyDownloadModal";
+import { downloadRecoveryKey } from "../../utils/recoveryKeyDownload";
 
 function Register() {
   const initialState = {
@@ -26,6 +34,12 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
+    security:{
+      salt:null,
+      recoveryVault:null,
+      vaultIv:null,
+    }
+    
   };
   const [profileData, setProfileData] = useState(initialState);
   const [showPassword, setShowPassword] = useState(false);
@@ -35,29 +49,104 @@ function Register() {
 
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null);
-  const [usernameStatus, setUsernameStatus] = useState({
+  
+  // Use custom hooks for username and email availability
+  const {
+    status: usernameStatus,
+    checkUsername,
+    checkUsernameImmediate,
+    resetStatus: resetUsernameStatus
+  } = useUsernameAvailability(500);
+  
+  const {
+    status: emailStatus,
+    checkEmail,
+    checkEmailImmediate,
+    resetStatus: resetEmailStatus
+  } = useEmailAvailability(500);
+  
+  const [confirmPasswordStatus, setConfirmPasswordStatus] = useState({
     checking: false,
-    available: null, // null = not checked, true = available, false = taken
+    matches: null, // null = not checked, true = matches, false = doesn't match
     message: ''
   });
-  const [usernameDebounceTimer, setUsernameDebounceTimer] = useState(null);
+  const [confirmPasswordDebounceTimer, setConfirmPasswordDebounceTimer] = useState(null);
+  
+  // Hash routing for recovery key modal
+  const { step, navigation, close } = useHashRoute();
+  const isRecoveryKeyStep = step === 'recovery-key';
+  
+  // Recovery key download modal state
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [recoveryData, setRecoveryData] = useState(null);
 
-  // Handle username availability check
-  const handleUsernameCheck = async (username) => {
-    if (!username || username.trim() === '') {
-      setUsernameStatus({ checking: false, available: null, message: '' });
+  // Check for recovery key hash on mount and load data from sessionStorage
+  useEffect(() => {
+    if (isRecoveryKeyStep) {
+      const storedRecoveryData = sessionStorage.getItem('pendingRecoveryKey');
+      if (storedRecoveryData) {
+        try {
+          const parsed = JSON.parse(storedRecoveryData);
+          // Only update if recoveryData is null or different
+          setRecoveryData(prev => {
+            if (!prev || JSON.stringify(prev) !== JSON.stringify(parsed)) {
+              return parsed;
+            }
+            return prev;
+          });
+          // Only set modal to true if it's not already true
+          setShowRecoveryModal(prev => prev || true);
+        } catch (error) {
+          console.error('Error parsing recovery data:', error);
+          // Clear invalid data
+          sessionStorage.removeItem('pendingRecoveryKey');
+          // Clear hash to close modal (use direct hash change to avoid dependency)
+          window.location.hash = '';
+        }
+      } else {
+        // No recovery data found, clear hash to close modal
+        window.location.hash = '';
+      }
+    } else {
+      // Only update if modal is currently showing
+      setShowRecoveryModal(prev => prev ? false : prev);
+    }
+    // Only depend on isRecoveryKeyStep - close function is stable and doesn't need to be in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRecoveryKeyStep]);
+
+  // Username and email checks are now handled by custom hooks
+
+  // Handle confirm password match check
+  const handleConfirmPasswordCheck = (password, confirmPassword) => {
+    if (!confirmPassword || confirmPassword.trim() === '') {
+      setConfirmPasswordStatus({ checking: false, matches: null, message: '' });
       return;
     }
 
-    setUsernameStatus({ checking: true, available: null, message: 'Checking...' });
+    if (!password || password.trim() === '') {
+      setConfirmPasswordStatus({ 
+        checking: false, 
+        matches: null, 
+        message: 'Enter password first' 
+      });
+      return;
+    }
 
-    const result = await checkUsernameAvailability(username);
-    
-    setUsernameStatus({
-      checking: false,
-      available: result.available,
-      message: result.message
-    });
+    // Check if passwords match
+    if (password === confirmPassword) {
+      setConfirmPasswordStatus({
+        checking: false,
+        matches: true,
+        message: 'Passwords match ✓'
+      });
+    } else {
+      setConfirmPasswordStatus({
+        checking: false,
+        matches: false,
+        message: 'Passwords do not match'
+      });
+    }
   };
 
   const handleChange = (e) => {
@@ -69,24 +158,44 @@ function Register() {
       [name]: value,
     }));
 
-    // Check username availability with debounce
+    // Check username availability with debounce (handled by hook)
     if (name === 'username') {
+      checkUsername(value);
+    }
+
+    // Check email availability with debounce (handled by hook)
+    if (name === 'email') {
+      checkEmail(value);
+    }
+
+    // Check confirm password match with debounce
+    if (name === 'confirmPassword') {
       // Clear previous timer
-      if (usernameDebounceTimer) {
-        clearTimeout(usernameDebounceTimer);
+      if (confirmPasswordDebounceTimer) {
+        clearTimeout(confirmPasswordDebounceTimer);
       }
 
-      // Reset status when user starts typing
-      if (value.trim() === '') {
-        setUsernameStatus({ checking: false, available: null, message: '' });
-      } else {
-        // Set new timer (wait 500ms after user stops typing)
-        const timer = setTimeout(() => {
-          handleUsernameCheck(value);
-        }, 500);
-        
-        setUsernameDebounceTimer(timer);
+      // Set new timer (wait 300ms after user stops typing)
+      const timer = setTimeout(() => {
+        handleConfirmPasswordCheck(profileData.password, value);
+      }, 300);
+      
+      setConfirmPasswordDebounceTimer(timer);
+    }
+
+    // Also check confirm password when password changes
+    if (name === 'password' && profileData.confirmPassword) {
+      // Clear previous timer
+      if (confirmPasswordDebounceTimer) {
+        clearTimeout(confirmPasswordDebounceTimer);
       }
+
+      // Set new timer (wait 300ms after user stops typing)
+      const timer = setTimeout(() => {
+        handleConfirmPasswordCheck(value, profileData.confirmPassword);
+      }, 300);
+      
+      setConfirmPasswordDebounceTimer(timer);
     }
   };
 
@@ -95,20 +204,22 @@ function Register() {
     setError("");
     setToast(null);
     setFocusPassword(false);
+    resetUsernameStatus();
+    resetEmailStatus();
   };
 
   const handleSignIn = () => {
     clearFormData();
     navigate("/login");
   };
-  // Cleanup timer on unmount
+  // Cleanup confirm password timer on unmount (username/email timers handled by hooks)
   useEffect(() => {
     return () => {
-      if (usernameDebounceTimer) {
-        clearTimeout(usernameDebounceTimer);
+      if (confirmPasswordDebounceTimer) {
+        clearTimeout(confirmPasswordDebounceTimer);
       }
     };
-  }, [usernameDebounceTimer]);
+  }, [confirmPasswordDebounceTimer]);
 
   const passwordRules = useMemo(() => {
     const password = profileData.password;
@@ -124,8 +235,79 @@ function Register() {
   const handleFocus = () => {
     setFocusPassword(true);
   };
+  
+  // Recovery key download handlers
+  const handleRecoveryDownload = async () => {
+    // Use recoveryData from state (loaded from sessionStorage) or profileData
+    const dataToUse = recoveryData || profileData;
+    
+    if (!dataToUse.security || !dataToUse.security.salt) {
+      return false;
+    }
+    
+    try {
+      const success = await downloadRecoveryKey(
+        dataToUse.security, 
+        dataToUse.email
+      );
+      return success;
+    } catch (error) {
+      console.error('Recovery key download error:', error);
+      return false;
+    }
+  };
+
+  const handleRecoveryModalClose = () => {
+    setShowRecoveryModal(false);
+    // Clear sessionStorage
+    sessionStorage.removeItem('pendingRecoveryKey');
+    setRecoveryData(null);
+    // Clear hash
+    close();
+    // Navigate to login after modal closes
+    setProfileData(initialState);
+    setTimeout(() => {
+      navigate("/login");
+    }, 500);
+  };
+  
   const validateForm = async (e) => {
     e.preventDefault();
+    
+    // Trim and check if fields are empty FIRST (before other validations)
+    // Use nullish coalescing and ensure we handle undefined/null/empty strings
+    const trimmedUsername = String(profileData.username || '').trim();
+    const trimmedEmail = String(profileData.email || '').trim();
+    const trimmedPassword = String(profileData.password || '').trim();
+    const trimmedConfirmPassword = String(profileData.confirmPassword || '').trim();
+    
+    // Check if any field is empty
+    const missingFields = [];
+    if (!trimmedUsername) missingFields.push('Username');
+    if (!trimmedEmail) missingFields.push('Email');
+    if (!trimmedPassword) missingFields.push('Password');
+    if (!trimmedConfirmPassword) missingFields.push('Confirm Password');
+    
+    if (missingFields.length > 0) {
+      const errorMessage = missingFields.length === 1 
+        ? `${missingFields[0]} is required`
+        : `Please fill in: ${missingFields.join(', ')}`;
+      
+      console.log('Validation failed - Missing fields:', missingFields);
+      console.log('Field values:', {
+        username: profileData.username || '(empty)',
+        email: profileData.email || '(empty)',
+        password: profileData.password ? '(has value)' : '(empty)',
+        confirmPassword: profileData.confirmPassword ? '(has value)' : '(empty)'
+      });
+      
+      setToast({ 
+        message: errorMessage, 
+        type: "error" 
+      });
+      console.log("Here is the error of required fields");
+      return;
+    }
     
     // Check if username is available
     if (usernameStatus.available === false || usernameStatus.checking) {
@@ -139,8 +321,8 @@ function Register() {
     }
     
     // If username hasn't been checked yet, check it now
-    if (profileData.username && usernameStatus.available === null) {
-      await handleUsernameCheck(profileData.username);
+    if (trimmedUsername && usernameStatus.available === null) {
+      await checkUsernameImmediate(trimmedUsername);
       // Wait a moment for state to update
       setTimeout(() => {
         if (usernameStatus.available === false) {
@@ -152,46 +334,128 @@ function Register() {
       }, 100);
       return;
     }
-    
-    if (
-      !profileData.username ||
-      !profileData.email ||
-      !profileData.password ||
-      !profileData.confirmPassword
-    ) {
+
+    // Check if email is available
+    if (emailStatus.available === false || emailStatus.checking) {
       setToast({ 
-        message: "All fields are required", 
+        message: emailStatus.checking 
+          ? "Please wait while we check email availability" 
+          : "Email is already registered. Please use another email.", 
         type: "error" 
       });
       return;
     }
-    if (!isPasswordValid) {
+    
+    // If email hasn't been checked yet, check it now
+    if (trimmedEmail && emailStatus.available === null) {
+      await checkEmailImmediate(trimmedEmail);
+      // Wait a moment for state to update
+      setTimeout(() => {
+        if (emailStatus.available === false) {
+          setToast({ 
+            message: "Email is already registered. Please use another email.", 
+            type: "error" 
+          });
+        }
+      }, 100);
+      return;
+    }
+    // Check password validity using trimmed password
+    const passwordRules = {
+      minLength: trimmedPassword.length >= 8,
+      hasUpperCase: /[A-Z]/.test(trimmedPassword),
+      hasLowerCase: /[a-z]/.test(trimmedPassword),
+      hasNumber: /[0-9]/.test(trimmedPassword),
+      hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(trimmedPassword),
+    };
+    const isPasswordValidNow = Object.values(passwordRules).every(Boolean);
+    
+    if (!isPasswordValidNow) {
       setToast({ 
         message: "Password does not meet all requirements", 
         type: "error" 
       });
       return;
     }
-    if (profileData.password !== profileData.confirmPassword) {
+    if (trimmedPassword !== trimmedConfirmPassword) {
       setToast({ 
         message: "Passwords do not match", 
         type: "error" 
       });
       return;
     }
+    // Setup a salt
+    const salt = generateRandomSalt();
+
+    // Derive the master key from password and salt (use trimmed password)
+    const masterKey = await deriveMasterKey(trimmedPassword, salt);
+
+    // Create a Recovery Key (256 bits)
+    const recoveryKey = await window.crypto.subtle.generateKey({
+      name: "AES-GCM",
+      length: 256
+    },
+    true,
+    ["wrapKey", "unwrapKey"]
+  );
+  const vaultIv = window.crypto.getRandomValues(new Uint8Array(12));
+  
+  // Wrap the recovery key with the master key (encrypt it)
+  const wrappedRecoveryKey = await window.crypto.subtle.wrapKey("raw", recoveryKey, masterKey, { name: "AES-GCM", iv: vaultIv });
+  
+  // Convert ArrayBuffer to Array for storage
+  const securityObject = { 
+    salt : Array.from(salt),
+    recoveryVault : Array.from(new Uint8Array(wrappedRecoveryKey)),
+    vaultIv : Array.from(vaultIv)
+  }
+  setProfileData(prevData =>({...prevData, security:securityObject}));
+    
+
+    
     try {
+      // Prepare registration data (use trimmed values, remove confirmPassword, keep security object)
+      const registrationData = {
+        username: trimmedUsername,
+        email: trimmedEmail,
+        password: trimmedPassword,
+        security: securityObject
+      };
+      console.log(registrationData);
+      console.log("Security object:",registrationData.security);
       const res = await axios.post(
-        "http://localhost:5000/api/users/register",
-        profileData
+        `${getApiBaseURL()}/users/register`,
+        registrationData
       );
+      
       console.log(res.data.message);
-      setToast({ message: "Registration is successful! Redirecting to login...", type: "success" });
-      setProfileData(initialState);
-      setTimeout(() => {
-        navigate("/login");
-      }, 2500);
+      
+      // Show recovery key download modal after successful registration
+      // Use securityObject directly since state update is async
+      if (securityObject && securityObject.salt) {
+        // Store recovery data in sessionStorage for persistence on refresh
+        const recoveryDataToStore = {
+          email: profileData.email,
+          security: securityObject
+        };
+        sessionStorage.setItem('pendingRecoveryKey', JSON.stringify(recoveryDataToStore));
+        setRecoveryData(recoveryDataToStore);
+        
+        setToast({ message: "Registration successful! Please download your recovery key.", type: "success" });
+        // Navigate to recovery key hash route
+        navigation('#recovery-key');
+        setShowRecoveryModal(true);
+      } else {
+        // If no recovery key, just navigate
+        setToast({ message: "Registration is successful! Redirecting to login...", type: "success" });
+        setProfileData(initialState);
+        setTimeout(() => {
+          navigate("/login");
+        }, 2500);
+      }
       
     } catch (err) {
+      console.log(err);
       setToast({ 
         message: err.response?.data?.message || "Registration failed. Please try again.", 
         type: "error" 
@@ -209,9 +473,19 @@ function Register() {
           duration={2500}
         />
       )}
+      
+      {/* Recovery Key Download Modal */}
+      {showRecoveryModal && (recoveryData || profileData.security) && (
+        <RecoveryKeyDownloadModal
+          isOpen={showRecoveryModal}
+          onClose={handleRecoveryModalClose}
+          onDownload={handleRecoveryDownload}
+          userEmail={recoveryData?.email || profileData.email}
+        />
+      )}
       <div className="flex justify-center items-center">
         <div 
-          className="flex flex-col items-center bg-slate-800/10 backdrop-blur-xl shadow-2xl rounded-4xl border border-amber-50 mt-10 px-18 py-10 mb-32"
+          className="flex flex-col items-center bg-slate-800/10 backdrop-blur-xl shadow-2xl rounded-md border border-amber-50 mt-10 px-18 py-10 mb-32"
           style={{ 
             minWidth: '700px', 
             maxWidth: '1152px'
@@ -227,9 +501,9 @@ function Register() {
           <div className="h-px w-full bg-linear-to-r from-transparent via-cyan-500 to-transparent mt-3"></div>
 
           <form className="max-w-xl min-w-150 flex flex-col gap-3">
-            <div className="relative">
+            <div className="relative group">
               <label className={styles.labelBase}>Username</label>
-              <User className="absolute top-19 left-4 text-slate-400" />
+              <User className="w-7 h-7 absolute top-19 left-4 text-slate-400 group-focus-within:text-blue-500" />
               
               {/* Status icon */}
               {profileData.username && (
@@ -271,20 +545,53 @@ function Register() {
                 </p>
               )}
             </div>
-            <div className="relative">
+            <div className="relative group">
               <label className={styles.labelBase}>Email Id</label>
-              <MailIcon className="absolute top-20 left-3 text-slate-400" />
+              <MailIcon className="absolute top-20 left-3 text-slate-400 group-focus-within:text-blue-500" />
+              
+              {/* Status icon */}
+              {profileData.email && (
+                <div className="absolute top-20 right-4">
+                  {emailStatus.checking ? (
+                    <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                  ) : emailStatus.available === true ? (
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  ) : emailStatus.available === false ? (
+                    <AlertCircle className="w-5 h-5 text-red-400" />
+                  ) : null}
+                </div>
+              )}
+              
               <input
-                className={styles.inputField}
+                className={`${styles.inputField} ${
+                  emailStatus.available === false 
+                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400' 
+                    : emailStatus.available === true 
+                    ? 'border-green-400 focus:border-green-400 focus:ring-green-400' 
+                    : ''
+                }`}
                 placeholder="Enter Email Id"
                 name="email"
                 value={profileData.email}
                 onChange={handleChange}
               />
+              
+              {/* Status message */}
+              {profileData.email && emailStatus.message && (
+                <p className={`text-sm mt-1 ml-1 ${
+                  emailStatus.available === true 
+                    ? 'text-green-400' 
+                    : emailStatus.available === false 
+                    ? 'text-red-400' 
+                    : 'text-slate-400'
+                }`}>
+                  {emailStatus.message}
+                </p>
+              )}
             </div>
-            <div className="relative">
+            <div className="relative group">
               <label className={styles.labelBase}>Password</label>
-              <Lock className="absolute top-19 left-3 text-slate-400" />
+              <Lock className="absolute top-19 left-3 text-slate-400 group-focus-within:text-blue-500" />
               <button
                 className="absolute right-3 top-17 translate-y-2 text-slate-400 cursor-pointer mr-2"
                 onClick={() => setShowPassword(!showPassword)}  type="button" 
@@ -331,11 +638,17 @@ function Register() {
                 </div>
               </div>
             )}
-            <div className="relative">
+            <div className="relative group">
               <label className={styles.labelBase}>Confirm Password</label>
-              <Lock className="absolute top-19 left-3 text-slate-400" />
+              <Lock className="absolute top-19 left-3 text-slate-400 group-focus-within:text-blue-500" />
               <input
-                className={styles.inputField}
+                className={`${styles.inputField} ${
+                  confirmPasswordStatus.matches === false 
+                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400' 
+                    : confirmPasswordStatus.matches === true 
+                    ? 'border-green-400 focus:border-green-400 focus:ring-green-400' 
+                    : ''
+                }`}
                 placeholder="Confirm you password"
                 name="confirmPassword"
                 value={profileData.confirmPassword}
@@ -348,6 +661,19 @@ function Register() {
               >
                {showConfirmPassword?<Eye/>:<EyeOff/>}
               </button>
+              
+              {/* Status message */}
+              {profileData.confirmPassword && confirmPasswordStatus.message && (
+                <p className={`text-sm mt-1 ml-1 ${
+                  confirmPasswordStatus.matches === true 
+                    ? 'text-green-400' 
+                    : confirmPasswordStatus.matches === false 
+                    ? 'text-red-400' 
+                    : 'text-slate-400'
+                }`}>
+                  {confirmPasswordStatus.message}
+                </p>
+              )}
             </div>
             <button
               className="w-full h-14 rounded-md bg-linear-to-r from-blue-500 via-cyan-500 to-blue-500 mt-8 mb-4 text-white font-semibold text-[20px] p-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"

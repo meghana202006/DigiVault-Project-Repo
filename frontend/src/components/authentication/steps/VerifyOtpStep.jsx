@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
+import { getApiBaseURL } from "../../../utils/axiosInstance";
 import { Mail } from "lucide-react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import ModalContainer from "../../shared/ModalContainer";
@@ -42,9 +43,9 @@ function VerifyOtpStep({ email, flowType, onSuccess }) {
     loader.start(); // Start progress animation
 
     try {
+      const base = getApiBaseURL();
       const endpoint =
-        flowType === "LOGIN" ? 
-        "http://localhost:5000/api/users/verifyOTP" : "http://localhost:5000/api/users/verifyForgotPasswordOTP";
+        flowType === "LOGIN" ? `${base}/users/verifyOTP` : `${base}/users/verifyForgotPasswordOTP`;
       const res = await axios.post(
         endpoint,
         {
@@ -138,7 +139,7 @@ function VerifyOtpStep({ email, flowType, onSuccess }) {
     setCanResend(false);
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/users/resendOTP",
+        `${getApiBaseURL()}/users/resendOTP`,
         { email: email.email || email }
       );
       alert(res.data.message);

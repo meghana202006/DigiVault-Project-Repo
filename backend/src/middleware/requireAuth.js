@@ -23,7 +23,8 @@ const requireAuth = (req, res, next) => {
 
     } catch (err) {
         console.error("Token verification failed:", err.message);
-        return res.status(403).json({ message: "login to access this page." });
+        // Return 401 instead of 403 so frontend interceptor can handle token refresh
+        return res.status(401).json({ message: "login to access this page." });
     }
 };
 
