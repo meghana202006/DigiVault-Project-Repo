@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Folder, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { Folder, Trash2, Edit2, Loader2 , ChevronRight, FolderOpen} from 'lucide-react';
 import { formatFileDate } from '../../utils/fileHelpers';
 
 const FolderItem = memo(function FolderItem({ folder, onClick, onEdit, onDelete, isDeleting = false }) {
@@ -79,6 +79,9 @@ const FolderItem = memo(function FolderItem({ folder, onClick, onEdit, onDelete,
           ) : (
             <Trash2 className='w-6 h-6 text-red-500 hover:text-red-400 transition-colors duration-200'/>
           )}
+        </button>
+        <button>
+            <ChevronRight className='w-6 h-6 text-slate-400'/>
         </button>
       </div>
     </div>

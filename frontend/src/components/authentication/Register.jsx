@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { generateRandomSalt } from "../../utils/megaHelpers/saltGenerator";
 import { deriveMasterKey } from "../../utils/megaHelpers/genMasterKey";
 import { useHashRoute } from "../hooks/useHashRoute";
 import useUsernameAvailability from "../hooks/useUsernameAvailability";
 import useEmailAvailability from "../hooks/useEmailAvailability";
-
+import FormField from "../shared/FormField";
 import axios from "axios";
 import { getApiBaseURL } from "../../utils/axiosInstance";
 
@@ -58,13 +58,14 @@ function Register() {
     resetStatus: resetUsernameStatus
   } = useUsernameAvailability(500);
   
-  const {
-    status: emailStatus,
-    checkEmail,
-    checkEmailImmediate,
-    resetStatus: resetEmailStatus
-  } = useEmailAvailability(500);
+  // const {
+  //   status: emailStatus,
+  //   checkEmail,
+  //   checkEmailImmediate,
+  //   resetStatus: resetEmailStatus
+  // } = useEmailAvailability(500);
   
+  const { status: emailStatus, checkEmail } = useEmailAvailability(500);
   const [confirmPasswordStatus, setConfirmPasswordStatus] = useState({
     checking: false,
     matches: null, // null = not checked, true = matches, false = doesn't match
@@ -321,19 +322,22 @@ function Register() {
     }
     
     // If username hasn't been checked yet, check it now
-    if (trimmedUsername && usernameStatus.available === null) {
-      await checkUsernameImmediate(trimmedUsername);
-      // Wait a moment for state to update
-      setTimeout(() => {
-        if (usernameStatus.available === false) {
-          setToast({ 
-            message: "Username is already taken. Please choose another one.", 
-            type: "error" 
-          });
-        }
-      }, 100);
-      return;
-    }
+    // if (trimmedUsername && usernameStatus.available === null) {
+    //   await checkUsernameImmediate(trimmedUsername);
+    //   // Wait a moment for state to update
+    //   setTimeout(() => {
+    //     if (usernameStatus.available === false) {
+    //       setToast({ 
+    //         message: "Username is already taken. Please choose another one.", 
+    //         type: "error" 
+    //       });
+    //     }
+    //   }, 100);
+    //   return;
+    // }
+
+    const isUserAvailable = await checkUsernameImmediate(trimmedUsername);
+    if (!isUserAvailable) return
 
     // Check if email is available
     if (emailStatus.available === false || emailStatus.checking) {
@@ -347,19 +351,21 @@ function Register() {
     }
     
     // If email hasn't been checked yet, check it now
-    if (trimmedEmail && emailStatus.available === null) {
-      await checkEmailImmediate(trimmedEmail);
-      // Wait a moment for state to update
-      setTimeout(() => {
-        if (emailStatus.available === false) {
-          setToast({ 
-            message: "Email is already registered. Please use another email.", 
-            type: "error" 
-          });
-        }
-      }, 100);
-      return;
-    }
+    // if (trimmedEmail && emailStatus.available === null) {
+    //   await checkEmailImmediate(trimmedEmail);
+    //   // Wait a moment for state to update
+    //   setTimeout(() => {
+    //     if (emailStatus.available === false) {
+    //       setToast({ 
+    //         message: "Email is already registered. Please use another email.", 
+    //         type: "error" 
+    //       });
+    //     }
+    //   }, 100);
+    //   return;
+    // }
+
+    
     // Check password validity using trimmed password
     const passwordRules = {
       minLength: trimmedPassword.length >= 8,
@@ -409,7 +415,7 @@ function Register() {
     recoveryVault : Array.from(new Uint8Array(wrappedRecoveryKey)),
     vaultIv : Array.from(vaultIv)
   }
-  setProfileData(prevData =>({...prevData, security:securityObject}));
+  
     
 
     
@@ -428,6 +434,7 @@ function Register() {
         registrationData
       );
       
+      setProfileData(prevData =>({...prevData, security:securityObject}));
       console.log(res.data.message);
       
       // Show recovery key download modal after successful registration
@@ -501,114 +508,60 @@ function Register() {
           <div className="h-px w-full bg-linear-to-r from-transparent via-cyan-500 to-transparent mt-3"></div>
 
           <form className="max-w-xl min-w-150 flex flex-col gap-3">
-            <div className="relative group">
-              <label className={styles.labelBase}>Username</label>
-              <User className="w-7 h-7 absolute top-19 left-4 text-slate-400 group-focus-within:text-blue-500" />
-              
-              {/* Status icon */}
-              {profileData.username && (
-                <div className="absolute top-19 right-4">
-                  {usernameStatus.checking ? (
-                    <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                  ) : usernameStatus.available === true ? (
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                  ) : usernameStatus.available === false ? (
-                    <AlertCircle className="w-5 h-5 text-red-400" />
-                  ) : null}
-                </div>
-              )}
-              
-              <input
-                className={`${styles.inputField} ${
-                  usernameStatus.available === false 
-                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400' 
-                    : usernameStatus.available === true 
-                    ? 'border-green-400 focus:border-green-400 focus:ring-green-400' 
-                    : ''
-                }`}
-                placeholder="Enter the username"
-                name="username"
-                value={profileData.username}
-                onChange={handleChange}
-              />
-              
-              {/* Status message */}
-              {profileData.username && usernameStatus.message && (
-                <p className={`text-sm mt-1 ml-1 ${
-                  usernameStatus.available === true 
-                    ? 'text-green-400' 
-                    : usernameStatus.available === false 
-                    ? 'text-red-400' 
-                    : 'text-slate-400'
-                }`}>
-                  {usernameStatus.message}
-                </p>
-              )}
-            </div>
-            <div className="relative group">
-              <label className={styles.labelBase}>Email Id</label>
-              <MailIcon className="absolute top-20 left-3 text-slate-400 group-focus-within:text-blue-500" />
-              
-              {/* Status icon */}
-              {profileData.email && (
-                <div className="absolute top-20 right-4">
-                  {emailStatus.checking ? (
-                    <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                  ) : emailStatus.available === true ? (
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                  ) : emailStatus.available === false ? (
-                    <AlertCircle className="w-5 h-5 text-red-400" />
-                  ) : null}
-                </div>
-              )}
-              
-              <input
-                className={`${styles.inputField} ${
-                  emailStatus.available === false 
-                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400' 
-                    : emailStatus.available === true 
-                    ? 'border-green-400 focus:border-green-400 focus:ring-green-400' 
-                    : ''
-                }`}
-                placeholder="Enter Email Id"
-                name="email"
-                value={profileData.email}
-                onChange={handleChange}
-              />
-              
-              {/* Status message */}
-              {profileData.email && emailStatus.message && (
-                <p className={`text-sm mt-1 ml-1 ${
-                  emailStatus.available === true 
-                    ? 'text-green-400' 
-                    : emailStatus.available === false 
-                    ? 'text-red-400' 
-                    : 'text-slate-400'
-                }`}>
-                  {emailStatus.message}
-                </p>
-              )}
-            </div>
-            <div className="relative group">
-              <label className={styles.labelBase}>Password</label>
-              <Lock className="absolute top-19 left-3 text-slate-400 group-focus-within:text-blue-500" />
-              <button
-                className="absolute right-3 top-17 translate-y-2 text-slate-400 cursor-pointer mr-2"
-                onClick={() => setShowPassword(!showPassword)}  type="button" 
-              >
-                {showPassword?<Eye/>:<EyeOff/>}
-              </button>
-              <input
-                className={styles.inputField}
-                placeholder="Enter the password"
-                name="password"
-                value={profileData.password}
-                onChange={handleChange}
-                onFocus={handleFocus}
-                onBlur={()=>setFocusPassword(false)}
-                type={showPassword ? "text" : "password"}
-              />
-            </div>
+            
+             
+ {/* Username Field */}
+  <FormField
+    label="Username"
+    name="username"
+    icon={User}
+    placeholder="Enter the username"
+    value={profileData.username}
+    onChange={handleChange}
+    status={usernameStatus}
+  />
+  {/* Email Field */}
+  {/* Change the status prop to pass the object directly */}
+<FormField
+  label="Email Id"
+  name="email"
+  icon={MailIcon}
+  placeholder="Enter Email Id"
+  value={profileData.email}
+  onChange={handleChange}
+  status={emailStatus} // <--- Pass emailStatus directly
+  rightElement={
+    <div className="flex items-center">
+      {emailStatus.checking && (
+        <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      )}
+      {!emailStatus.checking && emailStatus.available && (
+        <CheckCircle className="text-green-400 w-5 h-5" />
+      )}
+      {!emailStatus.checking && emailStatus.available === false && (
+        <AlertCircle className="text-red-400 w-5 h-5" />
+      )}
+    </div>
+  }
+/>
+             
+  {/* Password Field */}
+            <FormField
+            label="Password"
+            name="password"
+            icon={Lock}
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter the password"
+            value={profileData.password}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={() => setFocusPassword(false)}
+            rightElement={
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-slate-400 hover:text-white">
+                {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+            </button>
+          }
+        />
             {focusPassword && profileData.password && (
               <div className="flex flex-col w-full mb-5 mt-5 p-5 gap-2 bg-slate-900/20 backdrop-blur-sm rounded-md border border-slate-300">
                 <p className="text-red-400 font-medium text-[19px]">
@@ -638,43 +591,28 @@ function Register() {
                 </div>
               </div>
             )}
-            <div className="relative group">
-              <label className={styles.labelBase}>Confirm Password</label>
-              <Lock className="absolute top-19 left-3 text-slate-400 group-focus-within:text-blue-500" />
-              <input
-                className={`${styles.inputField} ${
-                  confirmPasswordStatus.matches === false 
-                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400' 
-                    : confirmPasswordStatus.matches === true 
-                    ? 'border-green-400 focus:border-green-400 focus:ring-green-400' 
-                    : ''
-                }`}
-                placeholder="Confirm you password"
-                name="confirmPassword"
-                value={profileData.confirmPassword}
-                onChange={handleChange}
-                type={showConfirmPassword ? "text" : "password"}
-              />
-              <button
-                className="absolute right-3 top-17 translate-y-2 text-slate-400 mr-3 cursor-pointer"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}  type="button" 
-              >
-               {showConfirmPassword?<Eye/>:<EyeOff/>}
-              </button>
+            {/* Confirm Password Field */}
+            {/* Confirm Password Field - FIXED VERSION */}
+<FormField
+  label="Confirm Password"
+  name="confirmPassword"
+  icon={Lock}
+  type={showConfirmPassword ? "text" : "password"}
+  placeholder="Confirm the password"
+  value={profileData.confirmPassword}
+  onChange={handleChange}
+  status={{
+    isValid: confirmPasswordStatus.matches,
+    message: confirmPasswordStatus.message
+  }}
+  rightElement={
+    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-slate-400 hover:text-white">
+        {showConfirmPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+    </button>
+  }
+/>
               
-              {/* Status message */}
-              {profileData.confirmPassword && confirmPasswordStatus.message && (
-                <p className={`text-sm mt-1 ml-1 ${
-                  confirmPasswordStatus.matches === true 
-                    ? 'text-green-400' 
-                    : confirmPasswordStatus.matches === false 
-                    ? 'text-red-400' 
-                    : 'text-slate-400'
-                }`}>
-                  {confirmPasswordStatus.message}
-                </p>
-              )}
-            </div>
+        
             <button
               className="w-full h-14 rounded-md bg-linear-to-r from-blue-500 via-cyan-500 to-blue-500 mt-8 mb-4 text-white font-semibold text-[20px] p-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               type="submit"

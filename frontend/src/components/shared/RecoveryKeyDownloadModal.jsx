@@ -26,7 +26,11 @@ const RecoveryKeyDownloadModal = ({ isOpen, onClose, onDownload, userEmail }) =>
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+   <div className={`fixed inset-0 z-50 flex justify-center bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto transition-all duration-500 ${
+    downloadSuccess 
+      ? 'items-center pt-0' 
+      : 'items-start pt-40'
+}`}>
       {/* Backdrop - no click to close */}
       <div className="absolute inset-0 animate-fade-in" />
       <div className="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xl border border-slate-400/50 relative z-10 overflow-hidden animate-modal-slide-up p-3">
@@ -86,7 +90,7 @@ const RecoveryKeyDownloadModal = ({ isOpen, onClose, onDownload, userEmail }) =>
         )}
 
         {/* Success State - No Header, Just Card */}
-        {downloadSuccess && (
+        {/* {downloadSuccess && (
           <div className="px-6 py-8">
             <div className="flex flex-col items-center text-center justify-center gap-4 mb-4">
               <div className="bg-green-500/10 p-4 rounded-full w-20 h-20 flex items-center justify-center">
@@ -100,7 +104,21 @@ const RecoveryKeyDownloadModal = ({ isOpen, onClose, onDownload, userEmail }) =>
               Your recovery key has been downloaded successfully. Please save it in a secure location.
             </p>
           </div>
-        )}
+        )} */}
+        {/* Success State block tweak */}
+{downloadSuccess && (
+  <div className="px-6 py-10 animate-fade-in"> {/* Added extra padding and fade-in */}
+    <div className="flex flex-col items-center text-center justify-center gap-4 mb-4">
+      <div className="bg-green-500/10 p-4 rounded-full w-24 h-24 flex items-center justify-center mb-2">
+        <CheckCircle className="text-green-400 h-16 w-16" />
+      </div>
+      <h2 className="text-3xl font-bold text-white">
+        Recovery Key Downloaded!
+      </h2>
+    </div>
+    {/* ... rest of content */}
+  </div>
+)}
 
         {/* Footer with Download Button */}
         {!downloadSuccess && (

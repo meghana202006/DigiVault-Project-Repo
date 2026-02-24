@@ -47,6 +47,10 @@ const fileSchema = new mongoose.Schema({
     type: String,
     required: true
     }, 
+  remotePath: {
+        type: String,
+        required :true
+    },
   
   createdAt: { type: Date, default: Date.now }
 });

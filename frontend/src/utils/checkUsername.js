@@ -8,7 +8,7 @@ const getUsersApiURL = () => `${getApiBaseURL()}/users`;
  * @param {string} username - The username to check
  * @returns {Promise<{available: boolean|null, message: string, error: boolean}>}
  */
-export const checkUsernameAvailability = async (username) => {
+const checkUsernameAvailability = async (username) => {
     // Return early if username is empty
     if (!username || username.trim() === '') {
         return {
@@ -44,7 +44,7 @@ export const checkUsernameAvailability = async (username) => {
  * @param {string} email - The email to check
  * @returns {Promise<{available: boolean|null, message: string, error: boolean}>}
  */
-export const checkEmailAvailability = async (email) => {
+const checkEmailAvailability = async (email) => {
     // Return early if email is empty
     if (!email || email.trim() === '') {
         return {
@@ -78,3 +78,4 @@ export const checkEmailAvailability = async (email) => {
     }
 };
 
+export { checkEmailAvailability ,checkUsernameAvailability}

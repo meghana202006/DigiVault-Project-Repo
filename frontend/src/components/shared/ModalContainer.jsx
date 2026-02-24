@@ -44,15 +44,15 @@ function ModalContainer({
 
   // Max height mapping
   const maxHeightClasses = {
-    sm: 'max-h-32',
-    md: 'max-h-48',
-    lg: 'max-h-60',
-    xl: 'max-h-72',
-    "2xl": 'max-h-[42rem]', // 672px
-    "3xl": 'max-h-96', // 384px
-    "4xl": 'max-h-[32rem]', // 512px
-    full: 'max-h-full',
-  }
+    sm: 'max-h-[20vh]',
+    md: 'max-h-[40vh]',
+    lg: 'max-h-[60vh]',
+    xl: 'max-h-[70vh]',
+    "2xl": 'max-h-[80vh]', // 80% of screen height
+    "3xl": 'max-h-[85vh]', // 85% of screen height
+    "4xl": 'max-h-[90vh]', // 90% of screen height
+    full: 'max-h-screen',
+  };
 
   // Padding mapping
   const paddingClasses = {

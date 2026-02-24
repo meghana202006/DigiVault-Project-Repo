@@ -19,46 +19,46 @@ function CreateFolderModel({ isActive, onClose, containerRef, sectionType = 'doc
     resetStatus: resetFolderNameStatus
   } = useFolderNameAvailability(sectionType, 100);
 
-  // Prevent scroll when modal is open
-  useEffect(() => {
-    if (isActive) {
-      // Find the scrollable container (the div with overflow-y-auto in VaultLayout)
-      const scrollableContainer = document.querySelector('.overflow-y-auto');
+  // // Prevent scroll when modal is open
+  // useEffect(() => {
+  //   if (isActive) {
+  //     // Find the scrollable container (the div with overflow-y-auto in VaultLayout)
+  //     const scrollableContainer = document.querySelector('.overflow-y-auto');
       
-      let savedScrollPosition = 0;
+  //     let savedScrollPosition = 0;
       
-      if (scrollableContainer) {
-        // Save current scroll position of the container
-        savedScrollPosition = scrollableContainer.scrollTop;
-        // Lock container scroll
-        scrollableContainer.style.overflow = 'hidden';
-      } else {
-        // Fallback: lock body scroll if container not found
-        savedScrollPosition = window.scrollY || document.documentElement.scrollTop;
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${savedScrollPosition}px`;
-        document.body.style.width = '100%';
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-      }
+  //     if (scrollableContainer) {
+  //       // Save current scroll position of the container
+  //       savedScrollPosition = scrollableContainer.scrollTop;
+  //       // Lock container scroll
+  //       scrollableContainer.style.overflow = 'hidden';
+  //     } else {
+  //       // Fallback: lock body scroll if container not found
+  //       savedScrollPosition = window.scrollY || document.documentElement.scrollTop;
+  //       document.body.style.position = 'fixed';
+  //       document.body.style.top = `-${savedScrollPosition}px`;
+  //       document.body.style.width = '100%';
+  //       document.body.style.overflow = 'hidden';
+  //       document.documentElement.style.overflow = 'hidden';
+  //     }
 
-      return () => {
-        // Restore scroll when modal closes
-        if (scrollableContainer) {
-          scrollableContainer.style.overflow = '';
-          scrollableContainer.scrollTop = savedScrollPosition;
-        } else {
-          // Restore body scroll
-          document.body.style.position = '';
-          document.body.style.top = '';
-          document.body.style.width = '';
-          document.body.style.overflow = '';
-          document.documentElement.style.overflow = '';
-          window.scrollTo(0, savedScrollPosition);
-        }
-      };
-    }
-  }, [isActive]);
+  //     return () => {
+  //       // Restore scroll when modal closes
+  //       if (scrollableContainer) {
+  //         scrollableContainer.style.overflow = '';
+  //         scrollableContainer.scrollTop = savedScrollPosition;
+  //       } else {
+  //         // Restore body scroll
+  //         document.body.style.position = '';
+  //         document.body.style.top = '';
+  //         document.body.style.width = '';
+  //         document.body.style.overflow = '';
+  //         document.documentElement.style.overflow = '';
+  //         window.scrollTo(0, savedScrollPosition);
+  //       }
+  //     };
+  //   }
+  // }, [isActive]);
 
   // Reset form when modal opens/closes
   useEffect(() => {

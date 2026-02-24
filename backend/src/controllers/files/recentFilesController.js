@@ -24,7 +24,7 @@ const getRecentFiles = async (req, res) => {
         const limit = Math.min(parseInt(limitParam) || 10, 20);
 
         // Seed recent files from DB if sorted sets are empty (one-time migration)
-        await redisService.seedRecentFilesFromDB(user._id);
+        await redisService.sendRecentFilesFromDB(user._id);
 
         const recentFiles = await redisService.getRecentFiles({
             sectionId: section || null,

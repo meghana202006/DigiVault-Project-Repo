@@ -8,12 +8,19 @@ const userRoutes = require('./src/routes/userRoutes');
 const fileRoutes = require('./src/routes/fileRoutes');
 const {connectToMega} = require('./src/config/mega');
 const { redis } = require('./src/utils/redisCache'); // Import Redis connection from cacheMethods
+const http = require('http');
+const {initSocket} = require('./src/utils/socket')
+
 
 dotenv.config();
 connectDB();
 connectToMega();
 
 const app = express();
+const server = http.createServer(app)
+
+// Initilizing the websockets
+initSocket(server)
 
 app.use(express.json());
 app.use(cookieParser()); // Parse cookies from request

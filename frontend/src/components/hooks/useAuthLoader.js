@@ -40,11 +40,14 @@ function useAuthLoader() {
         setProgress(0)
     }
     const stop = () =>{
+        // Clear intervals immediately so they don't keep updating state
+        if (progressRef.current) clearInterval(progressRef.current);
+        if (dotsRef.current) clearInterval(dotsRef.current);
         setProgress(100)
         setTimeout(() => {
             setIsLoading(false)
             setProgress(0)
-        }, 100);
+        }, 40);
     }
   return {
         isLoading,

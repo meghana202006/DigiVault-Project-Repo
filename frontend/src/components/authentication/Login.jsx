@@ -4,6 +4,7 @@ import Navbar from "../shared/Navbar";
 import useAuthLoader from "../hooks/useAuthLoader";
 import {useNavigate} from "react-router-dom";
 import { deriveAndStoreMasterKey } from "../../utils/megaHelpers/dbStorage";
+import { useGmailValidation } from "../hooks/useEmailVaildation";
 import {
   Mail,
   Lock,
@@ -34,64 +35,14 @@ function Login({ onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error , setError] = useState('');
   const [toast, setToast] = useState(null);
-  const [emailError, setEmailError] = useState('');
-  const [isEmailValid, setIsEmailValid] = useState(false);
+  //const [emailError, setEmailError] = useState('');
+  //const [isEmailValid, setIsEmailValid] = useState(false);
   const navigate = useNavigate();
+  const { isValid: isEmailValid, error: emailError } = useGmailValidation(formData.email);
 
-useEffect(() => {
-  if (!formData.email) {
-    setEmailError('');
-    setIsEmailValid(false);
-    return;
-  }
 
-  const handler = setTimeout(() => {
-    const email = formData.email.trim().toLowerCase();
-    if (!email.includes('@')) return;
-
-    const [username, domain] = email.split('@');
-
-    // 1. Gmail Domain Check
-    const isGmail = domain === 'gmail.com';
-
-    // 2. Character Check (The fix for user_name)
-    // This regex ONLY allows lowercase letters, numbers, and dots.
-    const validCharsRegex = /^[a-z0-9.]+$/;
-    const hasForbiddenChars = !validCharsRegex.test(username);
-
-    // 3. Gmail Dot Rules
-    const hasInvalidDots = 
-      username.startsWith('.') || 
-      username.endsWith('.') || 
-      username.includes('..');
-
-    // 4. Length Check (excluding dots)
-    const cleanUsername = username.replace(/\./g, '');
-    const isValidLength = cleanUsername.length >= 6 && cleanUsername.length <= 30;
-
-    const isFullyValid = isGmail && !hasForbiddenChars && !hasInvalidDots && isValidLength;
-
-    setIsEmailValid(isFullyValid);
-
-    // --- Specific Error Messaging ---
-    if (!isGmail) {
-      setEmailError('Please use a @gmail.com address');
-    } else if (hasForbiddenChars) {
-      // This catches underscores, dashes, etc.
-      setEmailError('Gmail usernames only allow letters, numbers, and dots');
-    } else if (hasInvalidDots) {
-      setEmailError('Invalid placement of dots');
-    } else if (cleanUsername.length < 6) {
-      setEmailError('Username must be at least 6 characters');
-    } else {
-      setEmailError('');
-    }
-  }, 400);
-
-  return () => clearTimeout(handler);
-}, [formData.email]);
-
-  const handleChange = (e) => {
+ 
+const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData, // keep existing values
@@ -107,9 +58,7 @@ useEffect(() => {
       email: "",
       password: "",
     });
-    setError("");
-    setEmailError("");
-    setIsEmailValid(false);
+    
     setToast(null);
   };
 
@@ -123,29 +72,23 @@ useEffect(() => {
     navigate("/register");
   };
 
- const handleKeyDown = (e) => {
-  if (e.key === 'Enter' && !loader.isLoading) {
-    e.preventDefault();
-    onSubmit(e);
-  }
- };
+ 
 
   const onSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+
+    if(loader.isLoading) return;
     if (!formData.email || !formData.password) {
       setToast({ message: "Please fill all fields", type: "error" });
       return;
     }
     
-    // Validate email format before submission
-   if (!isEmailValid) {
-    setToast({ 
-      message: emailError || "Please enter a valid Gmail address", 
-      type: "error" 
-    });
-    return; 
-  }
-
+   
+  // Final check before submission
+    if (!isEmailValid || !formData.password) {
+      setToast({ message: "Please fix the errors before continuing", type: "error" });
+      return;
+    }
     try {
       loader.start();
       const res = await axios.post(
@@ -169,20 +112,29 @@ useEffect(() => {
             localStorage.setItem('accessToken', res.data.token);
           }
           const saltBuffer = new Uint8Array(res.data.salt);
-          await deriveAndStoreMasterKey(formData.password, saltBuffer)
-          .then(()=>{
-            console.log('Master key stored successfully');
-          }).catch((error)=>{
-            console.error('Error storing master key:', error);
-            setToast({ message: "Failed to store master key", type: "error" });
-          });
-          setToast({ message: "Login successful!", type: "success" });
-          setTimeout(() => {
-            navigate('/vault', { replace: true });
-          }, 1000);
+          try{
+              await deriveAndStoreMasterKey(formData.password, saltBuffer)
+              console.log('Master key stored successfully');
+               setToast({ message: "Login successful!", type: "success" });
+                setTimeout(() => {
+                    navigate('/vault', { replace: true });
+                }, 1000);
+          }
+          
+          catch(error){
+              console.error('Error storing master key:', error);
+              setToast({ message: "Failed to store master key", type: "error" });
+          }
+            
+        
+         
         } else {
           // OTP required - proceed to OTP verification step
-          onLoginSuccess(formData.email);
+          loader.stop();
+
+          setTimeout(() => { // 2. Give the progress bar 100ms to hit 100% and vanish
+              onLoginSuccess(formData.email);
+          }, 20);
         }
       } else {
         setToast({ message: "Invalid Credentials", type: "error" });
@@ -273,7 +225,7 @@ useEffect(() => {
                 onChange={handleChange}
                 value={formData.password}
                 type={showPassword ? "text" : "password"}
-                onKeyDown={handleKeyDown}
+                
               ></input>
               <button
                 className="absolute top-7.5 right-6 text-slate-400 cursor-pointer"
@@ -290,14 +242,10 @@ useEffect(() => {
               </div>
             )}
             <button
-              disabled={loader.isLoading}
+              disabled={loader.isLoading || !isEmailValid || !formData.password}
               type="submit"
-              className={`w-full h-14 flex items-center justify-center gap-2 text-white mb-4 rounded-md p-2 mt-10 text-[17px] shadow-2xl mx-auto group ${
-                loader.isLoading
-                  ? "bg-gray-600 cursor-not-allowed"
-                  : " bg-linear-to-r from-blue-500 via-cyan-500 to-blue-500 hover:bg-amber-500 hover:text-slate-800"
-              }`}
-              onClick={onSubmit}
+              className={`w-full h-14 flex items-center justify-center gap-2 text-white mb-4 rounded-md p-2 mt-10 text-[17px] shadow-2xl mx-auto group bg-linear-to-r from-blue-500 via-cyan-500 to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
+             
             >
               <span className="font-semibold text-[18px]">
                 Continue to Verification
@@ -319,6 +267,7 @@ useEffect(() => {
                 Forgot your password?
               </p>
               <button
+                type='button'
                 className="text-cyan-500 font-semibold text-[18px] cursor-pointer hover:text-cyan-300"
                 onClick={handleResetPassword}
               >
@@ -330,6 +279,7 @@ useEffect(() => {
                 Don't have an account?
               </p>
               <button
+                type='button'
                 className="text-cyan-500 font-semibold text-[18px] cursor-pointer hover:text-cyan-300"
                 onClick={handleSignUp}
               >

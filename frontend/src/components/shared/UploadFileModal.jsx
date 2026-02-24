@@ -106,7 +106,7 @@ const UploadFileModal = ({ isOpen, onClose, onUploadSuccess, onUploadStart, sect
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-5">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-5">
       <div className="max-w-[500px] w-full bg-[#1a2332] p-10 rounded-3xl border border-[#2d3748]">
         <h2 className="text-2xl font-bold text-white mb-6">Upload & Encrypt</h2>
 

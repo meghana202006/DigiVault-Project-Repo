@@ -4,8 +4,8 @@ const loginStyles = {
 }
 
 const registerStyles ={
-    inputField : "mt-3 pl-13 w-full h-14 p-3 px-4 py-2 border rounded-md text-white text-[19px] border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition focus:border-transparent  bg-slate-900 placeholder-gray-400 placeholder-text-[16px]",
-    labelBase : "block mt-5 text-gray-800 text-[20px] text-white"
+    inputField : "w-full h-14 p-3 border rounded-md text-white text-[19px] border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition focus:border-transparent  bg-slate-900 placeholder-gray-400 placeholder-text-[16px]",
+    labelBase : "block mt-5 text-gray-800 text-[20px] text-white mb-3"
 }
 
 const selectStyles = {

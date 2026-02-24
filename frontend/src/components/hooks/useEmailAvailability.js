@@ -1,135 +1,101 @@
-import { useState, useEffect, useCallback } from 'react';
-import { checkEmailAvailability } from '../../utils/checkUsername';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { validateGmail } from '../../utils/emailValidation';
+import { checkEmailAvailability } from '../../utils/checkUsername'; // Ensure this points to the Email API helper
 
-/**
- * Custom hook for checking email availability with debounce
- * @param {number} debounceDelay - Delay in milliseconds (default: 500)
- * @returns {Object} { status, checkEmail, resetStatus }
- */
 const useEmailAvailability = (debounceDelay = 500) => {
   const [status, setStatus] = useState({
     checking: false,
-    available: null, // null = not checked, true = available, false = taken
-    message: ''
+    available: null, // true if format is OK AND email is free
+    message: '',
+    isFormatValid: false,
   });
-  const [debounceTimer, setDebounceTimer] = useState(null);
 
-  // Cleanup timer on unmount
+  const timerRef = useRef(null);
+
+  const clearTimer = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
   useEffect(() => {
-    return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-    };
-  }, [debounceTimer]);
+    return clearTimer;
+  }, []);
 
-  /**
-   * Check email availability (with debounce)
-   * @param {string} email - The email to check
-   */
   const checkEmail = useCallback((email) => {
-    // Reset status when email is empty
+    clearTimer();
+
+    // 1. Reset if empty
     if (!email || email.trim() === '') {
-      setStatus({ checking: false, available: null, message: '' });
-      setDebounceTimer(prev => {
-        if (prev) clearTimeout(prev);
-        return null;
+      setStatus({ checking: false, available: null, message: '', isFormatValid: false });
+      return;
+    }
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      setStatus({ 
+        checking: false, 
+        available: false, 
+        message: 'Please also use @gmail.com', 
+        isFormatValid: false 
       });
       return;
     }
 
-    // Check if email has @ symbol (basic check - let backend validate format)
-    if (!email.includes('@')) {
-      // No @ symbol yet - reset status
-      setStatus({ checking: false, available: null, message: '' });
-      setDebounceTimer(prev => {
-        if (prev) clearTimeout(prev);
-        return null;
+    // 2. Step One: Format Validation (Instant)
+    const formatResult = validateGmail(email);
+    
+    if (!formatResult.isValid) {
+      // If format is wrong, we stop here and show the format error
+      setStatus({ 
+        checking: false, 
+        available: false, 
+        message: formatResult.error, 
+        isFormatValid: false 
       });
       return;
     }
 
-    // Clear previous timer
-    setDebounceTimer(prev => {
-      if (prev) clearTimeout(prev);
-      return null;
+    // 3. Step Two: Availability Check (Debounced)
+    // Format is valid, so now we show "Checking..." and wait for user to stop typing
+    setStatus({ 
+      checking: true, 
+      available: null, 
+      message: 'Checking availability...', 
+      isFormatValid: true 
     });
 
-    // Set new timer (wait after user stops typing)
-    const timer = setTimeout(async () => {
-      setStatus({ checking: true, available: null, message: 'Checking...' });
-
+    timerRef.current = setTimeout(async () => {
       try {
         const result = await checkEmailAvailability(email);
-        
-        // Handle result - if available is null, it means format error (not an actual error)
         setStatus({
           checking: false,
           available: result.available,
-          message: result.message
+          message: result.message,
+          isFormatValid: true
         });
       } catch (error) {
-        console.error('Email check error:', error);
-        setStatus({
-          checking: false,
-          available: false,
-          message: 'Error checking email'
+        setStatus({ 
+          checking: false, 
+          available: false, 
+          message: 'Error verifying email', 
+          isFormatValid: true 
         });
       }
     }, debounceDelay);
-    
-    setDebounceTimer(timer);
   }, [debounceDelay]);
 
-  /**
-   * Reset the status
-   */
-  const resetStatus = useCallback(() => {
-    setDebounceTimer(prev => {
-      if (prev) clearTimeout(prev);
-      return null;
-    });
-    setStatus({ checking: false, available: null, message: '' });
-  }, []);
-
-  /**
-   * Manually trigger email check (without debounce)
-   * Useful for form submission validation
-   */
   const checkEmailImmediate = useCallback(async (email) => {
-    if (!email || email.trim() === '') {
-      setStatus({ checking: false, available: null, message: '' });
-      return;
-    }
+    clearTimer();
+    const formatResult = validateGmail(email);
+    if (!formatResult.isValid) return false;
 
-    setStatus({ checking: true, available: null, message: 'Checking...' });
-
-    try {
-      const result = await checkEmailAvailability(email);
-      
-      // Handle result - if available is null, it means format error (not an actual error)
-      setStatus({
-        checking: false,
-        available: result.available,
-        message: result.message
-      });
-    } catch (error) {
-      console.error('Email check error:', error);
-      setStatus({
-        checking: false,
-        available: false,
-        message: 'Error checking email'
-      });
-    }
+    const result = await checkEmailAvailability(email);
+    return result.available;
   }, []);
 
-  return {
-    status,
-    checkEmail,
-    checkEmailImmediate,
-    resetStatus
-  };
+  const resetStatus = useCallback(() => {
+    clearTimer();
+    setStatus({ checking: false, available: null, message: '', isFormatValid: false });
+  }, []);
+
+  return { status, checkEmail, checkEmailImmediate, resetStatus };
 };
 
 export default useEmailAvailability;
-

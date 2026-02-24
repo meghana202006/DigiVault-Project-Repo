@@ -31,6 +31,10 @@ const folderSchema = new mongoose.Schema({
         default: null
     },
 
+    remotePath:{
+        type:String,
+        required:true
+    },
     createdAt:{
         type: Date,
         default: Date.now

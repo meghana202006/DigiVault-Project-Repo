@@ -4,7 +4,7 @@ import useUser from './hooks/useUser';
 import NavigationPanel from './NavigationPanel';
 import VaultHeader from './shared/VaultHeader';
 import SearchBar from './shared/SearchBar';
-import ProfileSettingsModal from '../utils/megaHelpers/ProfileSettingsModal';
+import ProfileSettingsModal from '../components/shared/ProfileSettingsModal';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 function VaultLayout() {
@@ -12,7 +12,7 @@ function VaultLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    
     const contentRef = useRef(null);
 
     const handleLogout = useCallback(() => {
@@ -52,25 +52,25 @@ function VaultLayout() {
                 ref={contentRef}
                 className="relative z-10 p-8 h-full overflow-y-auto overflow-x-hidden max-w-full smooth-scroll"
               >
-                <VaultHeader user={user} onProfileClick={() => setIsProfileModalOpen(true)} />
-                {isProfileModalOpen ? (
-                  <ProfileSettingsModal
-                    isOpen={true}
-                    onClose={() => setIsProfileModalOpen(false)}
-                    user={user}
-                    onLogout={handleLogout}
-                    inline
-                  />
-                ) : (
+                <VaultHeader user={user} onProfileClick={() => navigate(`${location.pathname}#profile`)} />
+              
+               
+               
                   <>
                     <SearchBar/>
                     <div key={location.pathname} className="section-enter">
                       <Outlet/>
                     </div>
                   </>
-                )}
+                
               </div>
             </main>
+               <ProfileSettingsModal
+                    
+                    user={user}
+                    onLogout={handleLogout}
+                    inline
+              />
           </div>
         </div>
         </>
