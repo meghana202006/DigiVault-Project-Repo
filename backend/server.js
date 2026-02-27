@@ -1,5 +1,6 @@
 const express = require('express');
 const dotenv = require('dotenv');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
@@ -10,11 +11,16 @@ const {connectToMega} = require('./src/config/mega');
 const { redis } = require('./src/utils/redisCache'); // Import Redis connection from cacheMethods
 const http = require('http');
 const {initSocket} = require('./src/utils/socket')
+const { validateAndLogMegaPath } = require('./src/utils/megaCmdPath');
 
 
-dotenv.config();
+// Load .env from backend directory so it works even when started from project root
+dotenv.config({ path: path.join(__dirname, '.env') });
 connectDB();
 connectToMega();
+
+// Log whether MEGAcmd was found (helps debug "MEGAcmd not found" errors)
+validateAndLogMegaPath();
 
 const app = express();
 const server = http.createServer(app)
