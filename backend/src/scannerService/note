@@ -1,0 +1,20 @@
+
+this is for clamAV,
+
+run ClamAV
+
+install the ClamAV,
+
+after install follow this process:- open note as admistrators > open the ClamAV folder > search for conf_examples folder
+> make sure you change 'text document .txt' to 'all files' then you can see freshclam.conf.sample file open it
+> delete or put # infront of 'Example' line > then click save as and save as freshclam.conf change 'text document .txt' to 'all files' it in ClamAV main folder.   
+
+open cmd as admistrators then go to ClamAV dir > then run ./freshclam.conf
+
+After ClamAV: go to windows security > virus and threat protection > click on manage setting of virus and threat protection
+> scroll down and search for add or remove exclusions > add > seach for the digitvault project folder and select the folder.
+
+this will allow windows to ignor the virus contant file which we are goingto to test for project.
+
+
+install > pip install hatching-triage
