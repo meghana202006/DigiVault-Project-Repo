@@ -1,22 +1,21 @@
 import time
+import os
 from triage import Client
 
 # 1. Initialize the client
-# my ip got block i don't knwo why, can you use your account to get api
+# Use your API Key, i am not able to acess the site.
 API_KEY = "YOUR_API_KEY_HERE"
 client = Client(API_KEY)
 
 def scan_and_detonate(file_path):
     if not os.path.exists(file_path):
         print(f"Error: {file_path} not found.")
-        return
+        return 0
 
     print(f"[*] Uploading {file_path} to Hatching Triage...")
     
     # 2. Submit the file
-    # Use 'submit_sample' as the standard method for local files
     with open(file_path, "rb") as f:
-        # We pass the file handle directly
         sample = client.submit_sample(f)
     
     sample_id = sample['id']
@@ -25,7 +24,6 @@ def scan_and_detonate(file_path):
     # 3. Wait for the VM to finish execution
     print("[*] Waiting for VM detonation and report generation...")
     while True:
-        # In the official API, sample_by_id returns a dictionary
         sample_info = client.sample_by_id(sample_id)
         status = sample_info.get('status')
         
@@ -33,12 +31,11 @@ def scan_and_detonate(file_path):
             break
         elif status == "failed":
             print("[!] Analysis failed in the VM.")
-            return
+            return 0
             
         time.sleep(10)
 
     # 4. Fetch the summary report
-    # 'sample_get_summary' provides the score and behavioral tags
     report = client.sample_get_summary(sample_id)
     score = report.get('score', 0)
     
@@ -53,7 +50,6 @@ def scan_and_detonate(file_path):
     else:
         print("STATUS: [CLEAN] No threats detected.")
     
-    # Signatures are more detailed than tags for vulnerability research
     sigs = report.get('signatures', [])
     if sigs:
         print("Detected Behaviors:")
@@ -61,5 +57,7 @@ def scan_and_detonate(file_path):
             print(f"- {s.get('label')}")
     print("="*30)
 
-# Example usage
-scan_and_detonate("File anem with it extntion")
+    # This sends the score back to triage_gatekeeper.py
+    return score
+
+# scan_and_detonate("test_file.exe")

@@ -18,3 +18,71 @@ this will allow windows to ignor the virus contant file which we are goingto to 
 
 
 install > pip install hatching-triage
+
+
+<!-- flow -->
+1-fetch.py: Gets chunks from React/Redis and saves them to disk.
+
+2-assembler.py: Glues chunks into a whole file.
+
+3-manager.py: Runs ClamAV & YARA in parallel.
+
+4-triage_gatekeeper.py: Manages the 2-file limit for the VM scan.
+
+5-sendStatus.py: Tells the React frontend what is happening.
+
+6-cleanup_service.py: Deletes everything once it's done.
+
+
+<!-- AI had gave me this for frontend integration if it can help you (i have not tested the flow yet but the clamAV and YARA scannere logic work perfectly tested using small file and suspeting files) -->
+Backend Scanner Integration Guide
+To connect the React frontend to the Python Scanner, follow these specifications.
+
+1. File Upload (Chunks via Redis)
+The frontend should push file chunks into the Redis list named file_chunks_queue.
+Payload Structure (JSON):
+{
+  "file_id": "unique_uuid_string",
+  "chunk_index": 0,
+  "total_chunks": 5,
+  "binary_data": "BASE64_ENCODED_STRING",
+  "is_final": false
+}
+
+Note: Data must be sent BEFORE client-side encryption.
+is_final: Set to true only on the last chunk.
+
+2. Status Polling
+The frontend should poll the following endpoint every 2-5 seconds to update the UI:
+GET http://<server_ip>:5001/scan-status/<file_id>
+
+Possible Statuses:
+RECEIVING: Chunks are still arriving.
+ASSEMBLING: Pieces are being joined.
+STAGE_1_AND_2_START: ClamAV and YARA are running.
+WAITING_FOR_TRIAGE_SLOT: In queue for the VM (2-file limit).
+TRIAGE_DETONATION_IN_PROGRESS: Currently in the VM.
+COMPLETED: Results are ready (File is now deleted from backend).
+
+3. Response Data Structure:
+When the status reaches COMPLETED, the results object will contain the following data:
+{
+  "file_id": "...",
+  "status": "COMPLETED",
+  "results": {
+    "clamav": {
+      "engine": "ClamAV",
+      "safe": true,
+      "threats": []
+    },
+    "yara": {
+      "engine": "YARA",
+      "safe": false,
+      "threats": ["RealLife_Image_Stego_MZ"]
+    },
+    "triage_score": "8" 
+  }
+}
+
+4. Cleanup
+Once the frontend receives the COMPLETED status, the backend automatically wipes the raw data.
