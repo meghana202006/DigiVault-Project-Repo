@@ -19,8 +19,11 @@ this will allow windows to ignor the virus contant file which we are goingto to 
 
 install > pip install hatching-triage
 
+<!--  Python Dependencies -->
+pip install redis flask python-dotenv yara-python hatching-triage
 
 <!-- flow -->
+
 1-fetch.py: Gets chunks from React/Redis and saves them to disk.
 
 2-assembler.py: Glues chunks into a whole file.
