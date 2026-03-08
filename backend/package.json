@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",
-    "dev": "concurrently \"nodemon server.js\" \"python mainRunner.py\""
+    "dev": "concurrently \"nodemon server.js\" \"python src/scannerService/mainRunner.py\""
   },
   "keywords": [],
   "author": "",

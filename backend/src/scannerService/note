@@ -19,25 +19,32 @@ this will allow windows to ignor the virus contant file which we are goingto to 
 
 install > pip install hatching-triage
 
+
+
+
+
+
 <!--  Python Dependencies -->
 pip install redis flask python-dotenv yara-python hatching-triage
+
+
 
 <!-- flow -->
 
 1-fetch.py: Gets chunks from React/Redis and saves them to disk.
-
 2-assembler.py: Glues chunks into a whole file.
-
 3-manager.py: Runs ClamAV & YARA in parallel.
-
 4-triage_gatekeeper.py: Manages the 2-file limit for the VM scan.
-
 5-sendStatus.py: Tells the React frontend what is happening.
-
 6-cleanup_service.py: Deletes everything once it's done.
 
 
-<!-- AI had gave me this for frontend integration if it can help you (i have not tested the flow yet but the clamAV and YARA scannere logic work perfectly tested using small file and suspeting files) -->
+
+
+<!-- AI had gave me this for frontend integration if it can help you
+(i have not tested the flow yet but the clamAV and YARA scannere logic work
+perfectly tested using small file and suspeting files) -->
+
 Backend Scanner Integration Guide
 To connect the React frontend to the Python Scanner, follow these specifications.
 

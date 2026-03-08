@@ -32,7 +32,7 @@ redis_client = redis.StrictRedis(
 MAX_TRIAGE_CONCURRENT = 2
 
 def update_status(file_id, stage, result=None):
-    """Updates the Redis status for the frontend team."""
+    """Updates the Redis status for the frontend ."""
     status_key = f"status:{file_id}"
     update_data = {"current_stage": stage}
     if result:
